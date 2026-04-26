@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Party Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #181c27;
+    --surface2: #1f2437;
+    --border:   #2a3050;
+    --text:     #e8eaf6;
+    --muted:    #5a6280;
+    --accent:   #4f8ef7;
+
+    /* class palette */
+    --priest-bg:#3d1a2e; --priest-fg:#f472b6; --priest-border:#9d174d;
+    --sword-bg: #0d2545; --sword-fg: #60a5fa; --sword-border:#1d4ed8;
+    --spear-bg: #2d1515; --spear-fg: #f87171; --spear-border:#b91c1c;
+    --lute-bg:  #0d2a35; --lute-fg:  #38bdf8; --lute-border:#0369a1;
+    --numina-bg:#1e1040; --numina-fg:#c084fc; --numina-border:#7c3aed;
+    --blade-bg: #0d2818; --blade-fg: #34d399; --blade-border:#059669;
+    --fist-bg:  #2d1a08; --fist-fg:  #fb923c; --fist-border:#c2410c;
+    --none-bg:  #1a1f2e; --none-fg:  #6b7280; --none-border:#374151;
+  }
+
+  * { box-sizing:border-box; margin:0; padding:0; }
+
+  body {
+    font-family:'Sarabun', 'Kanit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height:100vh;
+    padding: 20px 16px 56px;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(79,142,247,.06) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 100%, rgba(124,58,237,.05) 0%, transparent 55%);
+  }
+
+  /* ── Grid ─────────────────────────────────────────── */
+  .parties-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  @media(max-width:1100px){ .parties-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:600px) { .parties-grid{ grid-template-columns:1fr; } }
+
+  /* ── Party Card ───────────────────────────────────── */
+  .party-card {
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .party-card.drag-over {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(79,142,247,.3), 0 4px 20px rgba(0,0,0,.4);
+  }
+
+  /* reserve card */
+  .party-card.reserve-card {
+    border: 1px dashed #a16207;
+    background: #141008;
+  }
+
+  /* ── Party Header ─────────────────────────────────── */
+  .party-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .party-num {
+    font-family: 'Kanit', sans-serif;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .party-name-input {
+    font-family: 'Kanit', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--text);
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    cursor: text;
+    user-select: text;
+  }
+  .party-name-input::placeholder { color: var(--muted); font-size:.85rem; }
+  .party-name-input:focus {
+    background: rgba(79,142,247,.08);
+    border-radius: 5px;
+    padding: 2px 6px;
+  }
+
+  .reserve-badge {
+    font-family: 'Kanit', sans-serif;
+    font-size: .65rem;
+    font-weight: 700;
+    background: #92400e;
+    color: #fbbf24;
+    border-radius: 20px;
+    padding: 2px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: .05em;
+  }
+
+  /* ── Members List ─────────────────────────────────── */
+  .members-list { padding: 10px; min-height: 44px; }
+
+  /* ── Member Chip (coloured by class) ─────────────── */
+  .member-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 9px;
+    margin-bottom: 5px;
+    border-left: 3px solid var(--none-border);
+    background: var(--none-bg);
+    cursor: grab;
+    transition: background .15s, box-shadow .15s, opacity .15s, border-color .15s, transform .1s;
+  }
+  .member-chip:last-of-type { margin-bottom: 0; }
+  .member-chip:hover { transform: translateX(2px); box-shadow: 0 2px 10px rgba(0,0,0,.35); }
+  .member-chip.dragging { opacity:.3; cursor:grabbing; }
+  .member-chip.drop-target {
+    box-shadow: 0 0 0 2px var(--accent), 0 2px 10px rgba(0,0,0,.35);
+  }
+
+  /* class-specific chip colours */
+  .chip-priest { background:var(--priest-bg); border-left-color:var(--priest-border); }
+  .chip-sword  { background:var(--sword-bg);  border-left-color:var(--sword-border);  }
+  .chip-spear  { background:var(--spear-bg);  border-left-color:var(--spear-border);  }
+  .chip-lute   { background:var(--lute-bg);   border-left-color:var(--lute-border);   }
+  .chip-numina { background:var(--numina-bg); border-left-color:var(--numina-border); }
+  .chip-blade  { background:var(--blade-bg);  border-left-color:var(--blade-border);  }
+  .chip-fist   { background:var(--fist-bg);   border-left-color:var(--fist-border);   }
+  .chip-none   { background:var(--none-bg);   border-left-color:var(--none-border);   }
+
+  .drag-handle { color: var(--muted); font-size:.8rem; flex-shrink:0; opacity:.5; }
+
+  .member-name-input {
+    font-family: 'Sarabun', 'Kanit', sans-serif;
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--text);
+    border: none;
+    background: transparent;
+    outline: none;
+    flex: 1;
+    min-width: 0;
+    cursor: text;
+    user-select: text;
+  }
+  .member-name-input::placeholder { color: var(--muted); font-size:.8rem; font-weight:400; }
+  .member-name-input:focus { background:rgba(255,255,255,.04); border-radius:4px; padding:1px 5px; }
+
+  /* ── Class Select ─────────────────────────────────── */
+  .class-select {
+    font-family: 'Kanit', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    padding: 3px 20px 3px 9px;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23aaa'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    transition: opacity .15s;
+    letter-spacing: .04em;
+  }
+  .class-select:hover { opacity:.85; }
+
+  /* class select colours */
+  .cls-none   { background:#1e2333; color:#6b7280; border-color:#374151; }
+  .cls-priest { background:var(--priest-bg); color:var(--priest-fg); border-color:var(--priest-border); }
+  .cls-sword  { background:var(--sword-bg);  color:var(--sword-fg);  border-color:var(--sword-border);  }
+  .cls-spear  { background:var(--spear-bg);  color:var(--spear-fg);  border-color:var(--spear-border);  }
+  .cls-lute   { background:var(--lute-bg);   color:var(--lute-fg);   border-color:var(--lute-border);   }
+  .cls-numina { background:var(--numina-bg); color:var(--numina-fg); border-color:var(--numina-border); }
+  .cls-blade  { background:var(--blade-bg);  color:var(--blade-fg);  border-color:var(--blade-border);  }
+  .cls-fist   { background:var(--fist-bg);   color:var(--fist-fg);   border-color:var(--fist-border);   }
+
+  /* ── Buttons ──────────────────────────────────────── */
+  .del-btn {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size:.95rem; line-height:1; padding:0 2px;
+    flex-shrink:0; transition: color .15s;
+  }
+  .del-btn:hover { color: #ef4444; }
+
+  .add-btn {
+    width: 100%; background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-family: 'Kanit', sans-serif; font-size:.78rem;
+    padding: 6px; border-radius: 8px; cursor: pointer;
+    margin-top: 8px; transition: all .15s;
+  }
+  .add-btn:hover { background:rgba(79,142,247,.08); color:var(--accent); border-color:var(--accent); }
+
+  /* ── Reserve Row ──────────────────────────────────── */
+  .reserve-row { margin-bottom: 20px; }
+
+  /* ── Save Bar ─────────────────────────────────────── */
+  .save-bar { text-align:center; margin-top:4px; }
+  .save-btn {
+    background: linear-gradient(135deg,#3b5ddb,#6d28d9);
+    color:#fff; border:none;
+    font-family:'Kanit',sans-serif; font-size:.95rem; font-weight:700;
+    padding: 11px 42px; border-radius:30px; cursor:pointer;
+    letter-spacing:.08em;
+    box-shadow: 0 4px 20px rgba(59,93,219,.35);
+    transition: all .2s;
+  }
+  .save-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(59,93,219,.5); }
+
+  /* ── Toast ────────────────────────────────────────── */
+  .toast {
+    position:fixed; bottom:28px; left:50%;
+    transform:translateX(-50%) translateY(60px);
+    background:#22304a; color:#e0f0ff;
+    font-family:'Kanit',sans-serif; font-size:.88rem;
+    padding:10px 28px; border-radius:30px;
+    border:1px solid #3b5ddb;
+    opacity:0; transition:all .3s; pointer-events:none; z-index:999;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── Color-bar top of each card ───────────────────── */
+  .party-color-bar { height: 3px; width:100%; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="save-bar">
+  <button class="save-btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
+</div>
+<div class="toast" id="toast">✅ บันทึกแล้ว!</div>
+
+<script>
+const PARTY_COLORS = ['#4f8ef7','#f97316','#10b981','#ec4899','#14b8a6','#a855f7','#ef4444','#f59e0b'];
+
+const CLASSES = [
+  { id:'none',   label:'— คลาส —',     css:'cls-none',   chip:'chip-none'   },
+  { id:'priest', label:'พระ',           css:'cls-priest', chip:'chip-priest' },
+  { id:'sword',  label:'ดาบ',           css:'cls-sword',  chip:'chip-sword'  },
+  { id:'spear',  label:'ทวน',          css:'cls-spear',  chip:'chip-spear'  },
+  { id:'lute',   label:'พิณ',           css:'cls-lute',   chip:'chip-lute'   },
+  { id:'numina', label:'นูมิน่า',       css:'cls-numina', chip:'chip-numina' },
+  { id:'blade',  label:'กระบี่สายฟ้า', css:'cls-blade',  chip:'chip-blade'  },
+  { id:'fist',   label:'หมัด',          css:'cls-fist',   chip:'chip-fist'   },
+];
+const CLASS_MAP = Object.fromEntries(CLASSES.map(c => [c.id, c]));
+
+const mkMember = () => ({ name:'', cls:'none' });
+
+const defaultData = {
+  parties: [
+    { name:'Party 1',   members: Array(5).fill(0).map(mkMember), reserve:false },
+    { name:'Party 2',   members: Array(5).fill(0).map(mkMember), reserve:false },
+    { name:'Party 3',   members: Array(5).fill(0).map(mkMember), reserve:false },
+    { name:'Party 4',   members: Array(5).fill(0).map(mkMember), reserve:false },
+
+    { name:'Party 5',   members: Array(5).fill(0).map(mkMember), reserve:false },
+    { name:'Party 6',   members: Array(5).fill(0).map(mkMember), reserve:false },
+    { name:'Party 7',   members: Array(5).fill(0).map(mkMember), reserve:false },
+
+    { name:'Roaming 1', members: Array(5).fill(0).map(mkMember), reserve:false },
+    { name:'Roaming 2', members: Array(5).fill(0).map(mkMember), reserve:false },
+    { name:'Roaming 3', members: Array(5).fill(0).map(mkMember), reserve:false },
+
+    { name:'ตัวสำรอง',  members: Array(5).fill(0).map(mkMember), reserve:true  },
+  ]
+};
+
+let data;
+try {
+  const saved = localStorage.getItem('party-manager-v7');
+  data = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultData));
+} catch(e) { data = JSON.parse(JSON.stringify(defaultData)); }
+
+// migrate old zone-based / v6 format
+if (data.zones && !data.parties) {
+  data.parties = [];
+  data.zones.forEach(z => z.parties.forEach(p => data.parties.push({ ...p, reserve:false })));
+  if (data.parties.length < 9) data.parties.push({ name:'ตัวสำรอง', members: Array(5).fill(0).map(mkMember), reserve:true });
+}
+if (!data.parties) data = JSON.parse(JSON.stringify(defaultData));
+data.parties.forEach(p => {
+  p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
+  if (p.reserve === undefined) p.reserve = false;
+});
+
+let drag = null;
+
+/* ── render ─────────────────────────────────────────── */
+function render() {
+  const main    = data.parties.filter(p => !p.reserve);
+  const reserve = data.parties.filter(p =>  p.reserve);
+  let html = '';
+
+  html += `<div class="parties-grid">`;
+  main.forEach((party, idx) => {
+    const pi = data.parties.indexOf(party);
+    html += renderCard(party, pi, PARTY_COLORS[idx % PARTY_COLORS.length], false, idx + 1);
+  });
+  html += `</div>`;
+
+  if (reserve.length) {
+    html += `<div class="reserve-row">`;
+    reserve.forEach(party => {
+      const pi = data.parties.indexOf(party);
+      html += renderCard(party, pi, '#d97706', true, null);
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderCard(party, pi, color, isReserve, num) {
+  return `
+  <div class="party-card${isReserve ? ' reserve-card' : ''}" id="card-${pi}"
+    ondragover="cardDragOver(event,${pi})"
+    ondragleave="cardDragLeave(event,${pi})"
+    ondrop="cardDrop(event,${pi})"
+  >
+    <div class="party-color-bar" style="background:${color}"></div>
+    <div class="party-header">
+      ${num ? `<span class="party-num">${String(num).padStart(2,'0')}</span>` : ''}
+      <input class="party-name-input" value="${esc(party.name)}" placeholder="ชื่อปาร์ตี้..."
+        oninput="data.parties[${pi}].name=this.value" />
+      ${isReserve ? `<span class="reserve-badge">🛡 สำรอง</span>` : ''}
+    </div>
+    <div class="members-list">
+      ${party.members.map((m, mi) => {
+        const cls = CLASS_MAP[m.cls] || CLASS_MAP['none'];
+        return `
+        <div class="member-chip ${cls.chip}" id="chip-${pi}-${mi}"
+          draggable="true"
+          ondragstart="chipDragStart(event,${pi},${mi})"
+          ondragend="chipDragEnd(event)"
+          ondragover="chipDragOver(event,${pi},${mi})"
+          ondragleave="chipDragLeave(event,${pi},${mi})"
+          ondrop="chipDrop(event,${pi},${mi})"
+        >
+          <span class="drag-handle">⠿</span>
+          <input class="member-name-input" value="${esc(m.name)}" placeholder="ชื่อผู้เล่น..."
+            oninput="data.parties[${pi}].members[${mi}].name=this.value"
+            ondragstart="event.stopPropagation()" />
+          <select class="class-select ${cls.css}"
+            onchange="setClass(${pi},${mi},this.value)"
+            ondragstart="event.stopPropagation()">
+            ${CLASSES.map(c=>`<option value="${c.id}" ${c.id===m.cls?'selected':''}>${c.label}</option>`).join('')}
+          </select>
+          <button class="del-btn" onclick="delMember(${pi},${mi})">×</button>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="padding:0 10px 10px">
+      <button class="add-btn" onclick="addMember(${pi})">+ เพิ่มสมาชิก</button>
+    </div>
+  </div>`;
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setClass(pi, mi, val) {
+  data.parties[pi].members[mi].cls = val;
+  // update chip and select colours without full re-render
+  const chip = document.getElementById(`chip-${pi}-${mi}`);
+  const sel  = chip ? chip.querySelector('select') : null;
+  if (!chip || !sel) return;
+  CLASSES.forEach(c => { chip.classList.remove(c.chip); sel.classList.remove(c.css); });
+  chip.classList.add(CLASS_MAP[val].chip);
+  sel.classList.add(CLASS_MAP[val].css);
+}
+
+function addMember(pi) { data.parties[pi].members.push(mkMember()); render(); }
+function delMember(pi, mi) { data.parties[pi].members.splice(mi,1); render(); }
+
+/* ── drag ───────────────────────────────────────────── */
+function chipDragStart(e, pi, mi) {
+  drag = { pi, mi };
+  e.dataTransfer.effectAllowed = 'move';
+  e.stopPropagation();
+  setTimeout(() => document.getElementById(`chip-${pi}-${mi}`)?.classList.add('dragging'), 0);
+}
+function chipDragEnd()  { clearHighlights(); drag = null; }
+
+function chipDragOver(e, pi, mi) {
+  if (!drag) return;
+  e.preventDefault(); e.stopPropagation();
+  if (drag.pi===pi && drag.mi===mi) return;
+  clearChipHighlights();
+  document.getElementById(`chip-${pi}-${mi}`)?.classList.add('drop-target');
+}
+function chipDragLeave(e, pi, mi) {
+  document.getElementById(`chip-${pi}-${mi}`)?.classList.remove('drop-target');
+}
+function chipDrop(e, tpi, tmi) {
+  e.preventDefault(); e.stopPropagation();
+  if (!drag) return;
+  const { pi:spi, mi:smi } = drag;
+  const src = data.parties[spi].members;
+  const tgt = data.parties[tpi].members;
+  if (spi===tpi) { [src[smi], src[tmi]] = [src[tmi], src[smi]]; }
+  else { const t={...src[smi]}; src[smi]={...tgt[tmi]}; tgt[tmi]=t; }
+  drag = null; render();
+}
+
+function cardDragOver(e, pi) {
+  if (!drag) return; e.preventDefault();
+  const card = document.getElementById(`card-${pi}`);
+  document.querySelectorAll('.party-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  card?.classList.add('drag-over');
+}
+function cardDragLeave(e, pi) {
+  const card = document.getElementById(`card-${pi}`);
+  if (card && !card.contains(e.relatedTarget)) card.classList.remove('drag-over');
+}
+function cardDrop(e, tpi) {
+  e.preventDefault();
+  if (!drag) return;
+  const { pi:spi, mi:smi } = drag;
+  if (spi===tpi) { drag=null; clearHighlights(); return; }
+  const m = data.parties[spi].members.splice(smi,1)[0];
+  data.parties[tpi].members.push(m);
+  drag=null; render();
+}
+
+function clearChipHighlights() {
+  document.querySelectorAll('.member-chip.drop-target').forEach(e=>e.classList.remove('drop-target'));
+}
+function clearHighlights() {
+  clearChipHighlights();
+  document.querySelectorAll('.member-chip.dragging').forEach(e=>e.classList.remove('dragging'));
+  document.querySelectorAll('.party-card.drag-over').forEach(e=>e.classList.remove('drag-over'));
+}
+
+/* ── save ───────────────────────────────────────────── */
+function saveData() {
+  try { localStorage.setItem('party-manager-v7', JSON.stringify(data)); } catch(e){}
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+render();
+</script>
+</body>
+</html>
