@@ -513,6 +513,7 @@ const SUPABASE_URL = "https://gjciyhywiabkngsoldgp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2l5aHl3aWFia25nc29sZGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMTgzNDYsImV4cCI6MjA5Mjc5NDM0Nn0.uzEaD7bdrhJk9qZNfGUxiKDHEU8xxQ4pUy5vF3dGhDk"; // 👈 ใส่ของจริง
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ROOM = "PARTY001";
+const SAVE_PIN = "001122"; // 👈 เปลี่ยนรหัสตรงนี้
 
 /* ===== LOAD จาก Supabase ===== */
 async function loadFromSupabase() {
@@ -529,8 +530,7 @@ async function loadFromSupabase() {
 }
 
 /* ===== SAVE ไป Supabase ===== */
-async function saveData() {
-  // save local backup ก่อน (กันพลาด)
+async function doSave() {
   try { localStorage.setItem('party-manager-v7', JSON.stringify(data)); } catch(e){}
   const { data: result, error } = await supabaseClient
     .from("party_rooms")
@@ -538,18 +538,61 @@ async function saveData() {
     .eq("room_code", ROOM);
   console.log("SAVE:", result, error);
   const t = document.getElementById('toast');
-  if (error) {
-    t.textContent = "❌ บันทึกไม่สำเร็จ (error)";
-  } else {
-    t.textContent = "✅ บันทึกแล้ว!";
-  }
+  t.textContent = error ? "❌ บันทึกไม่สำเร็จ" : "✅ บันทึกแล้ว!";
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
+function saveData() {
+  document.getElementById('pin-modal').style.display = 'flex';
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-error').style.display = 'none';
+  setTimeout(()=>document.getElementById('pin-input').focus(), 100);
+}
+
+function pinConfirm() {
+  const val = document.getElementById('pin-input').value;
+  if (val === SAVE_PIN) {
+    document.getElementById('pin-modal').style.display = 'none';
+    doSave();
+  } else {
+    document.getElementById('pin-error').style.display = 'block';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-input').focus();
+  }
+}
+
+function pinCancel() {
+  document.getElementById('pin-modal').style.display = 'none';
+}
+
+// กด Enter ใน input ได้เลย
+document.addEventListener('keydown', e => {
+  if (document.getElementById('pin-modal').style.display === 'flex') {
+    if (e.key === 'Enter') pinConfirm();
+    if (e.key === 'Escape') pinCancel();
+  }
+});
+
 /* ===== INIT ===== */
-render(); // render ด้วย local data ก่อนเลย (กัน Supabase ช้า/fail)
-loadFromSupabase(); // แล้วค่อย override ถ้า Supabase มีข้อมูล
+render();
+loadFromSupabase();
 </script>
+
+<!-- PIN Modal -->
+<div id="pin-modal" style="display:none; position:fixed; inset:0; background:rgba(80,60,120,.35); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:20px; padding:28px 32px; box-shadow:0 8px 40px rgba(100,80,150,.2); min-width:280px; text-align:center; border:1px solid #ddd5ea;">
+    <div style="font-family:'Kanit',sans-serif; font-size:1.1rem; font-weight:700; color:#3d3450; margin-bottom:6px;">🔒 ใส่รหัสเพื่อบันทึก</div>
+    <div style="font-family:'Sarabun',sans-serif; font-size:.85rem; color:#9b8fb0; margin-bottom:18px;">กรอกรหัสผ่านของ admin</div>
+    <input id="pin-input" type="password" placeholder="รหัสผ่าน..."
+      style="width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid #ddd5ea; font-family:'Kanit',sans-serif; font-size:1rem; outline:none; text-align:center; color:#3d3450; letter-spacing:.2em; margin-bottom:8px;"
+      onfocus="this.style.borderColor='#b39ddb'" onblur="this.style.borderColor='#ddd5ea'"/>
+    <div id="pin-error" style="display:none; color:#e57373; font-family:'Kanit',sans-serif; font-size:.8rem; margin-bottom:10px;">❌ รหัสไม่ถูกต้อง</div>
+    <div style="display:flex; gap:10px; margin-top:4px;">
+      <button onclick="pinCancel()" style="flex:1; padding:9px; border-radius:10px; border:1.5px solid #ddd5ea; background:#f5f0f8; color:#9b8fb0; font-family:'Kanit',sans-serif; font-size:.9rem; cursor:pointer;">ยกเลิก</button>
+      <button onclick="pinConfirm()" style="flex:1; padding:9px; border-radius:10px; border:none; background:linear-gradient(135deg,#b39ddb,#f48fb1); color:#fff; font-family:'Kanit',sans-serif; font-size:.9rem; font-weight:700; cursor:pointer;">บันทึก</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
