@@ -16,9 +16,9 @@
     --accent:   #b39ddb;
 
     /* class palette — pastel */
-    --priest-bg:#fce4ec; --priest-fg:#c2185b; --priest-border:#f48fb1;
+    --priest-bg:#fcd4e4; --priest-fg:#ad1457; --priest-border:#f06292;
     --sword-bg: #e3f2fd; --sword-fg: #1565c0; --sword-border:#90caf9;
-    --spear-bg: #ffeaea; --spear-fg: #c62828; --spear-border:#ef9a9a;
+    --spear-bg: #ffebee; --spear-fg: #c62828; --spear-border:#ef5350;
     --lute-bg:  #e0f7fa; --lute-fg:  #00838f; --lute-border:#80deea;
     --numina-bg:#ede7f6; --numina-fg:#6a1b9a; --numina-border:#ce93d8;
     --blade-bg: #e8f5e9; --blade-fg: #2e7d32; --blade-border:#a5d6a7;
@@ -324,12 +324,11 @@
   <button class="tab-btn active" id="tab-r1" onclick="switchRound(1)">⚔️ รอบแรก</button>
   <button class="tab-btn" id="tab-r2" onclick="switchRound(2)">🏆 รอบสอง</button>
   <button class="tab-btn" style="border-color:#80cbc4; color:#00838f;" onclick="loadFromSupabase()">🔄 โหลดข้อมูล</button>
+  <button class="tab-btn" style="border-color:#b39ddb; color:#7c5cbf;" onclick="saveData()">💾 บันทึกข้อมูล</button>
   <button class="copy-round-btn" id="copy-btn" style="display:none" onclick="copyRound1()">📋 คัดลอกจากรอบแรก</button>
 </div>
 <div id="app"></div>
-<div class="save-bar">
-  <button class="save-btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
-</div>
+
 <div class="toast" id="toast">✅ บันทึกแล้ว!</div>
 
 <script>
