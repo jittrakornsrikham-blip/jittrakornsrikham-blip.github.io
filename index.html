@@ -513,7 +513,6 @@ const SUPABASE_URL = "https://gjciyhywiabkngsoldgp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2l5aHl3aWFia25nc29sZGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMTgzNDYsImV4cCI6MjA5Mjc5NDM0Nn0.uzEaD7bdrhJk9qZNfGUxiKDHEU8xxQ4pUy5vF3dGhDk"; // 👈 ใส่ของจริง
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ROOM = "PARTY001";
-const ADMIN = "ADMIN999";
 
 /* ===== LOAD จาก Supabase ===== */
 async function loadFromSupabase() {
@@ -536,14 +535,11 @@ async function saveData() {
   const { data: result, error } = await supabaseClient
     .from("party_rooms")
     .update({ data: data })
-    .eq("room_code", ROOM)
-    .eq("admin_code", ADMIN);
+    .eq("room_code", ROOM);
   console.log("SAVE:", result, error);
   const t = document.getElementById('toast');
   if (error) {
     t.textContent = "❌ บันทึกไม่สำเร็จ (error)";
-  } else if (!result || result.length === 0) {
-    t.textContent = "❌ admin_code ผิด / ไม่มี row";
   } else {
     t.textContent = "✅ บันทึกแล้ว!";
   }
@@ -552,7 +548,8 @@ async function saveData() {
 }
 
 /* ===== INIT ===== */
-loadFromSupabase();
+render(); // render ด้วย local data ก่อนเลย (กัน Supabase ช้า/fail)
+loadFromSupabase(); // แล้วค่อย override ถ้า Supabase มีข้อมูล
 </script>
 </body>
 </html>
