@@ -274,9 +274,57 @@
   }
   .move-select:hover { background-color:#ffe8cc; border-color:#e07020; }
   .move-select:focus { border-color:#e07020; }
+
+  /* ── Tab Bar ──────────────────────────────────────── */
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    font-family: 'Kanit', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    padding: 9px 28px;
+    border-radius: 30px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .05em;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: #7c5cbf; }
+  .tab-btn.active {
+    background: linear-gradient(135deg,#b39ddb,#f48fb1);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(179,157,219,.4);
+  }
+  .copy-round-btn {
+    font-family: 'Kanit', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 30px;
+    border: 2px dashed #80deea;
+    background: #e0f7fa;
+    color: #00838f;
+    cursor: pointer;
+    transition: all .2s;
+    margin-left: auto;
+  }
+  .copy-round-btn:hover { background: #b2ebf2; border-color: #00838f; }
 </style>
 </head>
 <body>
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-r1" onclick="switchRound(1)">⚔️ รอบแรก</button>
+  <button class="tab-btn" id="tab-r2" onclick="switchRound(2)">🏆 รอบสอง</button>
+  <button class="copy-round-btn" id="copy-btn" style="display:none" onclick="copyRound1()">📋 คัดลอกจากรอบแรก</button>
+</div>
 <div id="app"></div>
 <div class="save-bar">
   <button class="save-btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
@@ -300,42 +348,66 @@ const CLASS_MAP = Object.fromEntries(CLASSES.map(c => [c.id, c]));
 
 const mkMember = () => ({ name:'', cls:'none' });
 
-const defaultData = {
+const mkDefaultData = () => ({
   parties: [
     { name:'Party 1',   members: Array(5).fill(0).map(mkMember), reserve:false },
     { name:'Party 2',   members: Array(5).fill(0).map(mkMember), reserve:false },
     { name:'Party 3',   members: Array(5).fill(0).map(mkMember), reserve:false },
     { name:'Party 4',   members: Array(5).fill(0).map(mkMember), reserve:false },
-
     { name:'Party 5',   members: Array(5).fill(0).map(mkMember), reserve:false },
     { name:'Party 6',   members: Array(5).fill(0).map(mkMember), reserve:false },
     { name:'Party 7',   members: Array(5).fill(0).map(mkMember), reserve:false },
-
     { name:'Roaming 1', members: Array(5).fill(0).map(mkMember), reserve:false },
     { name:'Roaming 2', members: Array(5).fill(0).map(mkMember), reserve:false },
     { name:'Roaming 3', members: Array(5).fill(0).map(mkMember), reserve:false },
-
     { name:'ตัวสำรอง',  members: Array(5).fill(0).map(mkMember), reserve:true  },
   ]
-};
-
-let data;
-try {
-  const saved = localStorage.getItem('party-manager-v7');
-  data = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultData));
-} catch(e) { data = JSON.parse(JSON.stringify(defaultData)); }
-
-// migrate old zone-based / v6 format
-if (data.zones && !data.parties) {
-  data.parties = [];
-  data.zones.forEach(z => z.parties.forEach(p => data.parties.push({ ...p, reserve:false })));
-  if (data.parties.length < 9) data.parties.push({ name:'ตัวสำรอง', members: Array(5).fill(0).map(mkMember), reserve:true });
-}
-if (!data.parties) data = JSON.parse(JSON.stringify(defaultData));
-data.parties.forEach(p => {
-  p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
-  if (p.reserve === undefined) p.reserve = false;
 });
+
+// dataR1 = รอบแรก, dataR2 = รอบสอง
+let dataR1, dataR2;
+try {
+  const s1 = localStorage.getItem('party-manager-r1');
+  dataR1 = s1 ? JSON.parse(s1) : mkDefaultData();
+} catch(e) { dataR1 = mkDefaultData(); }
+try {
+  const s2 = localStorage.getItem('party-manager-r2');
+  dataR2 = s2 ? JSON.parse(s2) : mkDefaultData();
+} catch(e) { dataR2 = mkDefaultData(); }
+
+function normalizeData(d) {
+  if (!d.parties) d = mkDefaultData();
+  d.parties.forEach(p => {
+    p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
+    if (p.reserve === undefined) p.reserve = false;
+  });
+  return d;
+}
+dataR1 = normalizeData(dataR1);
+dataR2 = normalizeData(dataR2);
+
+let currentRound = 1;
+let data = dataR1; // pointer ไปยัง round ปัจจุบัน
+
+function switchRound(r) {
+  currentRound = r;
+  data = r === 1 ? dataR1 : dataR2;
+  document.getElementById('tab-r1').classList.toggle('active', r === 1);
+  document.getElementById('tab-r2').classList.toggle('active', r === 2);
+  document.getElementById('copy-btn').style.display = r === 2 ? 'inline-block' : 'none';
+  render();
+}
+
+function copyRound1() {
+  if (!confirm('คัดลอกข้อมูลรอบแรกมาทับรอบสอง? ข้อมูลรอบสองจะหายไป')) return;
+  dataR2 = JSON.parse(JSON.stringify(dataR1));
+  data = dataR2;
+  render();
+  const t = document.getElementById('toast');
+  t.textContent = '📋 คัดลอกรอบแรกมาแล้ว!';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
 
 let drag = null;
 
@@ -512,36 +584,43 @@ render();
 const SUPABASE_URL = "https://gjciyhywiabkngsoldgp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2l5aHl3aWFia25nc29sZGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMTgzNDYsImV4cCI6MjA5Mjc5NDM0Nn0.uzEaD7bdrhJk9qZNfGUxiKDHEU8xxQ4pUy5vF3dGhDk"; // 👈 ใส่ของจริง
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const ROOM = "PARTY001";
-const SAVE_PIN = "001122"; // 👈 เปลี่ยนรหัสตรงนี้
+const ROOM_R1 = "PARTY001-R1";
+const ROOM_R2 = "PARTY001-R2";
+const LOGIN_PIN = "1234"; // 👈 รหัสเข้าดูหน้าเว็บ
+const SAVE_PIN  = "112211"; // 👈 รหัสบันทึกข้อมูล (admin)
+
+function currentRoom() {
+  return currentRound === 1 ? ROOM_R1 : ROOM_R2;
+}
 
 /* ===== LOAD จาก Supabase ===== */
 async function loadFromSupabase() {
-  const { data: res, error } = await supabaseClient
-    .from("party_rooms")
-    .select("data")
-    .eq("room_code", ROOM)
-    .single();
-  console.log("LOAD:", res, error);
-  if (res && res.data) {
-    data = res.data;
-    render();
-  }
+  // โหลดทั้งสอง round พร้อมกัน
+  const [res1, res2] = await Promise.all([
+    supabaseClient.from("party_rooms").select("data").eq("room_code", ROOM_R1).single(),
+    supabaseClient.from("party_rooms").select("data").eq("room_code", ROOM_R2).single(),
+  ]);
+  if (res1.data && res1.data.data) { dataR1 = normalizeData(res1.data.data); }
+  if (res2.data && res2.data.data) { dataR2 = normalizeData(res2.data.data); }
+  data = currentRound === 1 ? dataR1 : dataR2;
+  render();
 }
 
 /* ===== SAVE ไป Supabase ===== */
 async function doSave() {
-  try { localStorage.setItem('party-manager-v7', JSON.stringify(data)); } catch(e){}
-  const { data: result, error } = await supabaseClient
+  const lsKey = currentRound === 1 ? 'party-manager-r1' : 'party-manager-r2';
+  try { localStorage.setItem(lsKey, JSON.stringify(data)); } catch(e){}
+  const { error } = await supabaseClient
     .from("party_rooms")
     .update({ data: data })
-    .eq("room_code", ROOM);
-  console.log("SAVE:", result, error);
+    .eq("room_code", currentRoom());
   const t = document.getElementById('toast');
-  t.textContent = error ? "❌ บันทึกไม่สำเร็จ" : "✅ บันทึกแล้ว!";
+  t.textContent = error ? "❌ บันทึกไม่สำเร็จ" : `✅ บันทึกรอบ${currentRound === 1 ? 'แรก' : 'สอง'}แล้ว!`;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
 }
+
+let isUnlocked = false;
 
 function saveData() {
   document.getElementById('pin-modal').style.display = 'flex';
@@ -566,20 +645,56 @@ function pinCancel() {
   document.getElementById('pin-modal').style.display = 'none';
 }
 
-// กด Enter ใน input ได้เลย
+/* ===== LOGIN on load ===== */
+function showLoginModal() {
+  document.getElementById('login-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('login-input').focus(), 100);
+}
+
+function loginConfirm() {
+  const val = document.getElementById('login-input').value;
+  if (val === LOGIN_PIN) {
+    isUnlocked = true;
+    document.getElementById('login-modal').style.display = 'none';
+    render();
+    loadFromSupabase();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-input').value = '';
+    document.getElementById('login-input').focus();
+  }
+}
+
 document.addEventListener('keydown', e => {
   if (document.getElementById('pin-modal').style.display === 'flex') {
     if (e.key === 'Enter') pinConfirm();
     if (e.key === 'Escape') pinCancel();
   }
+  if (document.getElementById('login-modal').style.display === 'flex') {
+    if (e.key === 'Enter') loginConfirm();
+  }
 });
 
 /* ===== INIT ===== */
 render();
-loadFromSupabase();
+showLoginModal(); // แสดง login modal ก่อนเลย
 </script>
 
-<!-- PIN Modal -->
+<!-- Login Modal (โหลดหน้า) -->
+<div id="login-modal" style="display:none; position:fixed; inset:0; background:rgba(80,60,120,.5); backdrop-filter:blur(6px); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:24px; padding:36px 36px 28px; box-shadow:0 12px 50px rgba(100,80,150,.25); min-width:300px; text-align:center; border:1px solid #ddd5ea;">
+    <div style="font-size:2rem; margin-bottom:10px;">🔐</div>
+    <div style="font-family:'Kanit',sans-serif; font-size:1.2rem; font-weight:800; color:#3d3450; margin-bottom:4px;">Party Manager</div>
+    <div style="font-family:'Sarabun',sans-serif; font-size:.85rem; color:#9b8fb0; margin-bottom:22px;">ใส่รหัสเพื่อเข้าใช้งาน</div>
+    <input id="login-input" type="password" placeholder="รหัสผ่าน..."
+      style="width:100%; padding:11px 14px; border-radius:12px; border:1.5px solid #ddd5ea; font-family:'Kanit',sans-serif; font-size:1.05rem; outline:none; text-align:center; color:#3d3450; letter-spacing:.25em; margin-bottom:8px;"
+      onfocus="this.style.borderColor='#b39ddb'" onblur="this.style.borderColor='#ddd5ea'"/>
+    <div id="login-error" style="display:none; color:#e57373; font-family:'Kanit',sans-serif; font-size:.82rem; margin-bottom:10px;">❌ รหัสไม่ถูกต้อง ลองอีกครั้ง</div>
+    <button onclick="loginConfirm()" style="width:100%; padding:11px; border-radius:12px; border:none; background:linear-gradient(135deg,#b39ddb,#f48fb1); color:#fff; font-family:'Kanit',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; letter-spacing:.06em; box-shadow:0 4px 16px rgba(179,157,219,.4);">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- PIN Modal (บันทึก) -->
 <div id="pin-modal" style="display:none; position:fixed; inset:0; background:rgba(80,60,120,.35); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;">
   <div style="background:#fff; border-radius:20px; padding:28px 32px; box-shadow:0 8px 40px rgba(100,80,150,.2); min-width:280px; text-align:center; border:1px solid #ddd5ea;">
     <div style="font-family:'Kanit',sans-serif; font-size:1.1rem; font-weight:700; color:#3d3450; margin-bottom:6px;">🔒 ใส่รหัสเพื่อบันทึก</div>
