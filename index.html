@@ -515,3 +515,44 @@ render();
 </script>
 </body>
 </html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js">
+  const SUPABASE_URL = "sb_publishable_V4q0n5SMI6E7Bs_Bzpr1mw_cxkp-1Zt";
+const SUPABASE_KEY = "sb_secret_InwNt6W_6S4UMFr_JmOvOw_-vNogqBW";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  async function saveData() {
+  const room = "PARTY001";
+  const admin = "ADMIN999";
+
+  const { error } = await supabaseClient
+    .from("party_rooms")
+    .update({ data: data })
+    .eq("room_code", room)
+    .eq("admin_code", admin);
+
+  const t = document.getElementById('toast');
+
+  if (error) {
+    t.textContent = "❌ บันทึกไม่สำเร็จ";
+  } else {
+    t.textContent = "✅ บันทึกแล้ว!";
+  }
+
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+    async function loadData() {
+  const room = "PARTY001";
+
+  const { data: res } = await supabaseClient
+    .from("party_rooms")
+    .select("data")
+    .eq("room_code", room)
+    .single();
+
+  if (res && res.data && res.data.parties) {
+    data = res.data;
+    render();
+  }
+}
+    loadData();
+</script>
