@@ -587,7 +587,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ROOM_R1 = "PARTY001-R1";
 const ROOM_R2 = "PARTY001-R2";
 const LOGIN_PIN = "1234"; // 👈 รหัสเข้าดูหน้าเว็บ
-const SAVE_PIN  = "112211"; // 👈 รหัสบันทึกข้อมูล (admin)
+const SAVE_PIN  = "5678"; // 👈 รหัสบันทึกข้อมูล (admin)
 
 function currentRoom() {
   return currentRound === 1 ? ROOM_R1 : ROOM_R2;
@@ -595,14 +595,26 @@ function currentRoom() {
 
 /* ===== LOAD จาก Supabase ===== */
 async function loadFromSupabase() {
-  // โหลดทั้งสอง round พร้อมกัน
   const [res1, res2] = await Promise.all([
     supabaseClient.from("party_rooms").select("data").eq("room_code", ROOM_R1).single(),
     supabaseClient.from("party_rooms").select("data").eq("room_code", ROOM_R2).single(),
   ]);
-  if (res1.data && res1.data.data) { dataR1 = normalizeData(res1.data.data); }
-  if (res2.data && res2.data.data) { dataR2 = normalizeData(res2.data.data); }
-  data = currentRound === 1 ? dataR1 : dataR2;
+  console.log("LOAD R1:", res1);
+  console.log("LOAD R2:", res2);
+
+  if (res1.data?.data?.parties) {
+    dataR1 = normalizeData(res1.data.data);
+  }
+  if (res2.data?.data?.parties) {
+    dataR2 = normalizeData(res2.data.data);
+  }
+
+  // อัปเดต data ให้ชี้ไปยัง round ปัจจุบัน
+  if (currentRound === 1) {
+    data = dataR1;
+  } else {
+    data = dataR2;
+  }
   render();
 }
 
@@ -610,12 +622,21 @@ async function loadFromSupabase() {
 async function doSave() {
   const lsKey = currentRound === 1 ? 'party-manager-r1' : 'party-manager-r2';
   try { localStorage.setItem(lsKey, JSON.stringify(data)); } catch(e){}
-  const { error } = await supabaseClient
+  console.log("SAVE to room:", currentRoom(), "data:", data);
+  const { data: result, error } = await supabaseClient
     .from("party_rooms")
     .update({ data: data })
-    .eq("room_code", currentRoom());
+    .eq("room_code", currentRoom())
+    .select();
+  console.log("SAVE result:", result, "error:", error);
   const t = document.getElementById('toast');
-  t.textContent = error ? "❌ บันทึกไม่สำเร็จ" : `✅ บันทึกรอบ${currentRound === 1 ? 'แรก' : 'สอง'}แล้ว!`;
+  if (error) {
+    t.textContent = "❌ บันทึกไม่สำเร็จ: " + error.message;
+  } else if (!result || result.length === 0) {
+    t.textContent = "❌ ไม่พบ room_code ใน Supabase";
+  } else {
+    t.textContent = `✅ บันทึกรอบ${currentRound === 1 ? 'แรก' : 'สอง'}แล้ว!`;
+  }
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
 }
