@@ -537,7 +537,13 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   } else {
     t.textContent = "✅ บันทึกแล้ว!";
   }
+const { data: result, error } = await supabaseClient
+  .from("party_rooms")
+  .update({ data: data })
+  .eq("room_code", room)
+  .eq("admin_code", admin);
 
+console.log("SAVE RESULT:", result, error);
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
     async function loadData() {
