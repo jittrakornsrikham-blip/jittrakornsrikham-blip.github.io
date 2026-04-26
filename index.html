@@ -4,561 +4,73 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Party Manager</title>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:       #f5f0f8;
-    --surface:  #ffffff;
-    --surface2: #f0ebf7;
-    --border:   #ddd5ea;
-    --text:     #3d3450;
-    --muted:    #9b8fb0;
-    --accent:   #b39ddb;
-
-    /* class palette — pastel */
-    --priest-bg:#fce4ec; --priest-fg:#c2185b; --priest-border:#f48fb1;
-    --sword-bg: #e3f2fd; --sword-fg: #1565c0; --sword-border:#90caf9;
-    --spear-bg: #ffeaea; --spear-fg: #c62828; --spear-border:#ef9a9a;
-    --lute-bg:  #e0f7fa; --lute-fg:  #00838f; --lute-border:#80deea;
-    --numina-bg:#ede7f6; --numina-fg:#6a1b9a; --numina-border:#ce93d8;
-    --blade-bg: #e8f5e9; --blade-fg: #2e7d32; --blade-border:#a5d6a7;
-    --fist-bg:  #fff3e0; --fist-fg:  #e65100; --fist-border:#ffcc80;
-    --none-bg:  #f3f0f7; --none-fg:  #9e9e9e; --none-border:#d1c4e9;
-  }
-
-  * { box-sizing:border-box; margin:0; padding:0; }
-
-  body {
-    font-family:'Sarabun', 'Kanit', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height:100vh;
-    padding: 20px 16px 56px;
-    background-image:
-      radial-gradient(ellipse at 10% 0%, rgba(179,157,219,.18) 0%, transparent 55%),
-      radial-gradient(ellipse at 90% 100%, rgba(206,147,216,.12) 0%, transparent 55%);
-  }
-
-  /* ── Grid ─────────────────────────────────────────── */
-  .parties-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  @media(max-width:1100px){ .parties-grid{ grid-template-columns:repeat(2,1fr); } }
-  @media(max-width:600px) { .parties-grid{ grid-template-columns:1fr; } }
-
-  /* ── Party Card ───────────────────────────────────── */
-  .party-card {
-    background: var(--surface);
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(100,80,150,.08);
-    transition: border-color .2s, box-shadow .2s;
-  }
-  .party-card.drag-over {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(179,157,219,.4), 0 4px 20px rgba(100,80,150,.12);
-  }
-
-  /* reserve card */
-  .party-card.reserve-card {
-    border: 1px dashed #f0b97a;
-    background: #fffbf5;
-  }
-
-  /* ── Party Header ─────────────────────────────────── */
-  .party-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-  }
-
-  .party-num {
-    font-family: 'Kanit', sans-serif;
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .1em;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-
-  .party-name-input {
-    font-family: 'Kanit', sans-serif;
-    font-size: .95rem;
-    font-weight: 700;
-    letter-spacing: .06em;
-    color: var(--text);
-    border: none;
-    background: transparent;
-    outline: none;
-    width: 100%;
-    cursor: text;
-    user-select: text;
-  }
-  .party-name-input::placeholder { color: var(--muted); font-size:.85rem; }
-  .party-name-input:focus {
-    background: rgba(179,157,219,.12);
-    border-radius: 5px;
-    padding: 2px 6px;
-  }
-
-  .reserve-badge {
-    font-family: 'Kanit', sans-serif;
-    font-size: .65rem;
-    font-weight: 700;
-    background: #ffe0b2;
-    color: #e65100;
-    border-radius: 20px;
-    padding: 2px 10px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    letter-spacing: .05em;
-  }
-
-  /* ── Members List ─────────────────────────────────── */
-  .members-list { padding: 10px; min-height: 44px; }
-
-  /* ── Member Chip (coloured by class) ─────────────── */
-  .member-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 8px;
-    border-radius: 10px;
-    margin-bottom: 5px;
-    border-left: 3px solid var(--none-border);
-    background: var(--none-bg);
-    cursor: grab;
-    transition: background .15s, box-shadow .15s, opacity .15s, border-color .15s, transform .1s;
-  }
-  .member-chip:last-of-type { margin-bottom: 0; }
-  .member-chip:hover { transform: translateX(2px); box-shadow: 0 2px 10px rgba(100,80,150,.12); }
-  .member-chip.dragging { opacity:.35; cursor:grabbing; }
-  .member-chip.drop-target {
-    box-shadow: 0 0 0 2px var(--accent), 0 2px 10px rgba(100,80,150,.15);
-  }
-
-  /* class-specific chip colours */
-  .chip-priest { background:var(--priest-bg); border-left-color:var(--priest-border); }
-  .chip-sword  { background:var(--sword-bg);  border-left-color:var(--sword-border);  }
-  .chip-spear  { background:var(--spear-bg);  border-left-color:var(--spear-border);  }
-  .chip-lute   { background:var(--lute-bg);   border-left-color:var(--lute-border);   }
-  .chip-numina { background:var(--numina-bg); border-left-color:var(--numina-border); }
-  .chip-blade  { background:var(--blade-bg);  border-left-color:var(--blade-border);  }
-  .chip-fist   { background:var(--fist-bg);   border-left-color:var(--fist-border);   }
-  .chip-none   { background:var(--none-bg);   border-left-color:var(--none-border);   }
-
-  .drag-handle { color: var(--muted); font-size:.8rem; flex-shrink:0; opacity:.5; }
-
-  .member-name-input {
-    font-family: 'Sarabun', 'Kanit', sans-serif;
-    font-size: .92rem;
-    font-weight: 600;
-    color: var(--text);
-    border: none;
-    background: transparent;
-    outline: none;
-    flex: 1;
-    min-width: 0;
-    cursor: text;
-    user-select: text;
-  }
-  .member-name-input::placeholder { color: var(--muted); font-size:.8rem; font-weight:400; }
-  .member-name-input:focus { background:rgba(179,157,219,.1); border-radius:4px; padding:1px 5px; }
-
-  /* ── Class Select ─────────────────────────────────── */
-  .class-select {
-    font-family: 'Kanit', sans-serif;
-    font-size: .72rem;
-    font-weight: 700;
-    border: 1px solid transparent;
-    border-radius: 20px;
-    padding: 3px 20px 3px 9px;
-    cursor: pointer;
-    outline: none;
-    flex-shrink: 0;
-    appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%239b8fb0'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 6px center;
-    transition: opacity .15s;
-    letter-spacing: .04em;
-  }
-  .class-select:hover { opacity:.85; }
-
-  /* class select colours */
-  .cls-none   { background:#f3f0f7; color:#9e9e9e; border-color:#d1c4e9; }
-  .cls-priest { background:var(--priest-bg); color:var(--priest-fg); border-color:var(--priest-border); }
-  .cls-sword  { background:var(--sword-bg);  color:var(--sword-fg);  border-color:var(--sword-border);  }
-  .cls-spear  { background:var(--spear-bg);  color:var(--spear-fg);  border-color:var(--spear-border);  }
-  .cls-lute   { background:var(--lute-bg);   color:var(--lute-fg);   border-color:var(--lute-border);   }
-  .cls-numina { background:var(--numina-bg); color:var(--numina-fg); border-color:var(--numina-border); }
-  .cls-blade  { background:var(--blade-bg);  color:var(--blade-fg);  border-color:var(--blade-border);  }
-  .cls-fist   { background:var(--fist-bg);   color:var(--fist-fg);   border-color:var(--fist-border);   }
-
-  /* ── Buttons ──────────────────────────────────────── */
-  .del-btn {
-    background: none; border: none; color: var(--muted);
-    cursor: pointer; font-size:.95rem; line-height:1; padding:0 2px;
-    flex-shrink:0; transition: color .15s;
-  }
-  .del-btn:hover { color: #e57373; }
-
-  .add-btn {
-    width: 100%; background: none;
-    border: 1px dashed var(--border);
-    color: var(--muted);
-    font-family: 'Kanit', sans-serif; font-size:.78rem;
-    padding: 6px; border-radius: 8px; cursor: pointer;
-    margin-top: 8px; transition: all .15s;
-  }
-  .add-btn:hover { background:rgba(179,157,219,.12); color:#7c5cbf; border-color:var(--accent); }
-
-  /* ── Reserve Row ──────────────────────────────────── */
-  .reserve-row { margin-bottom: 20px; }
-
-  /* ── Save Bar ─────────────────────────────────────── */
-  .save-bar { text-align:center; margin-top:4px; }
-  .save-btn {
-    background: linear-gradient(135deg,#b39ddb,#f48fb1);
-    color:#fff; border:none;
-    font-family:'Kanit',sans-serif; font-size:.95rem; font-weight:700;
-    padding: 11px 42px; border-radius:30px; cursor:pointer;
-    letter-spacing:.08em;
-    box-shadow: 0 4px 20px rgba(179,157,219,.45);
-    transition: all .2s;
-  }
-  .save-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(179,157,219,.6); }
-
-  /* ── Toast ────────────────────────────────────────── */
-  .toast {
-    position:fixed; bottom:28px; left:50%;
-    transform:translateX(-50%) translateY(60px);
-    background:#f3e5f5; color:#6a1b9a;
-    font-family:'Kanit',sans-serif; font-size:.88rem;
-    padding:10px 28px; border-radius:30px;
-    border:1px solid #ce93d8;
-    opacity:0; transition:all .3s; pointer-events:none; z-index:999;
-  }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-  /* ── Color-bar top of each card ───────────────────── */
-  .party-color-bar { height: 4px; width:100%; }
-
-  /* ── Move-to select (reserve only) ───────────────── */
-  .move-select {
-    font-family: 'Kanit', sans-serif;
-    font-size: .68rem;
-    font-weight: 700;
-    border: 1px solid #f0b97a;
-    border-radius: 20px;
-    padding: 3px 20px 3px 8px;
-    cursor: pointer;
-    outline: none;
-    flex-shrink: 0;
-    appearance: none; -webkit-appearance: none;
-    background-color: #fff8f0;
-    color: #c2620a;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23c2620a'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 6px center;
-    transition: all .15s;
-    letter-spacing: .03em;
-    max-width: 110px;
-  }
-  .move-select:hover { background-color:#ffe8cc; border-color:#e07020; }
-  .move-select:focus { border-color:#e07020; }
-</style>
 </head>
+
 <body>
-<div id="app"></div>
-<div class="save-bar">
-  <button class="save-btn" onclick="saveData()">💾 บันทึกข้อมูล</button>
-</div>
-<div class="toast" id="toast">✅ บันทึกแล้ว!</div>
+
+<h2>Party Manager</h2>
+
+<button onclick="saveData()">💾 บันทึก</button>
+<p id="status"></p>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const PARTY_COLORS = ['#b39ddb','#f48fb1','#80cbc4','#ffe082','#80deea','#ef9a9a','#a5d6a7','#ffab91'];
+const SUPABASE_URL = "https://gjciyhywiabkngsoldgp.supabase.co/rest/v1/";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2l5aHl3aWFia25nc29sZGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMTgzNDYsImV4cCI6MjA5Mjc5NDM0Nn0.uzEaD7bdrhJk9qZNfGUxiKDHEU8xxQ4pUy5vF3dGhDk";
 
-const CLASSES = [
-  { id:'none',   label:'— คลาส —',     css:'cls-none',   chip:'chip-none'   },
-  { id:'priest', label:'พระ',           css:'cls-priest', chip:'chip-priest' },
-  { id:'sword',  label:'ดาบ',           css:'cls-sword',  chip:'chip-sword'  },
-  { id:'spear',  label:'ทวน',          css:'cls-spear',  chip:'chip-spear'  },
-  { id:'lute',   label:'พิณ',           css:'cls-lute',   chip:'chip-lute'   },
-  { id:'numina', label:'นูมิน่า',       css:'cls-numina', chip:'chip-numina' },
-  { id:'blade',  label:'กระบี่สายฟ้า', css:'cls-blade',  chip:'chip-blade'  },
-  { id:'fist',   label:'หมัด',          css:'cls-fist',   chip:'chip-fist'   },
-];
-const CLASS_MAP = Object.fromEntries(CLASSES.map(c => [c.id, c]));
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const mkMember = () => ({ name:'', cls:'none' });
-
-const defaultData = {
+// ====== DATA ======
+let data = {
   parties: [
-    { name:'Party 1',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party 2',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party 3',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party 4',   members: Array(5).fill(0).map(mkMember), reserve:false },
-
-    { name:'Party 5',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party 6',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party 7',   members: Array(5).fill(0).map(mkMember), reserve:false },
-
-    { name:'Roaming 1', members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Roaming 2', members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Roaming 3', members: Array(5).fill(0).map(mkMember), reserve:false },
-
-    { name:'ตัวสำรอง',  members: Array(5).fill(0).map(mkMember), reserve:true  },
+    {
+      name: "Party 1",
+      members: [{ name: "Alice", cls: "priest" }]
+    }
   ]
 };
 
-let data;
-try {
-  const saved = localStorage.getItem('party-manager-v7');
-  data = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultData));
-} catch(e) { data = JSON.parse(JSON.stringify(defaultData)); }
-
-// migrate old zone-based / v6 format
-if (data.zones && !data.parties) {
-  data.parties = [];
-  data.zones.forEach(z => z.parties.forEach(p => data.parties.push({ ...p, reserve:false })));
-  if (data.parties.length < 9) data.parties.push({ name:'ตัวสำรอง', members: Array(5).fill(0).map(mkMember), reserve:true });
-}
-if (!data.parties) data = JSON.parse(JSON.stringify(defaultData));
-data.parties.forEach(p => {
-  p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
-  if (p.reserve === undefined) p.reserve = false;
-});
-
-let drag = null;
-
-/* ── render ─────────────────────────────────────────── */
-function render() {
-  const main    = data.parties.filter(p => !p.reserve);
-  const reserve = data.parties.filter(p =>  p.reserve);
-  let html = '';
-
-  // รวม main + reserve ใน grid เดียวกัน (reserve ต่อท้าย main)
-  html += `<div class="parties-grid">`;
-  main.forEach((party, idx) => {
-    const pi = data.parties.indexOf(party);
-    html += renderCard(party, pi, PARTY_COLORS[idx % PARTY_COLORS.length], false, idx + 1);
-  });
-  reserve.forEach(party => {
-    const pi = data.parties.indexOf(party);
-    html += renderCard(party, pi, '#ffab91', true, null);
-  });
-  html += `</div>`;
-
-  document.getElementById('app').innerHTML = html;
-}
-
-function renderCard(party, pi, color, isReserve, num) {
-  return `
-  <div class="party-card${isReserve ? ' reserve-card' : ''}" id="card-${pi}"
-    ondragover="cardDragOver(event,${pi})"
-    ondragleave="cardDragLeave(event,${pi})"
-    ondrop="cardDrop(event,${pi})"
-  >
-    <div class="party-color-bar" style="background:${color}"></div>
-    <div class="party-header">
-      ${num ? `<span class="party-num">${String(num).padStart(2,'0')}</span>` : ''}
-      <input class="party-name-input" value="${esc(party.name)}" placeholder="ชื่อปาร์ตี้..."
-        oninput="data.parties[${pi}].name=this.value" />
-      ${isReserve ? `<span class="reserve-badge">🛡 สำรอง</span>` : ''}
-    </div>
-    <div class="members-list">
-      ${party.members.map((m, mi) => {
-        const cls = CLASS_MAP[m.cls] || CLASS_MAP['none'];
-        return `
-        <div class="member-chip ${cls.chip}" id="chip-${pi}-${mi}"
-          draggable="true"
-          ondragstart="chipDragStart(event,${pi},${mi})"
-          ondragend="chipDragEnd(event)"
-          ondragover="chipDragOver(event,${pi},${mi})"
-          ondragleave="chipDragLeave(event,${pi},${mi})"
-          ondrop="chipDrop(event,${pi},${mi})"
-        >
-          <span class="drag-handle">⠿</span>
-          <input class="member-name-input" value="${esc(m.name)}" placeholder="ชื่อผู้เล่น..."
-            oninput="data.parties[${pi}].members[${mi}].name=this.value"
-            ondragstart="event.stopPropagation()" />
-          <select class="class-select ${cls.css}"
-            onchange="setClass(${pi},${mi},this.value)"
-            ondragstart="event.stopPropagation()">
-            ${CLASSES.map(c=>`<option value="${c.id}" ${c.id===m.cls?'selected':''}>${c.label}</option>`).join('')}
-          </select>
-          ${isReserve ? `<select class="move-select" onchange="moveToParty(${pi},${mi},this.value);this.value=''" ondragstart="event.stopPropagation()">
-            <option value="">↪ ย้ายไป...</option>
-            ${data.parties.filter(p=>!p.reserve).map(p=>{
-              const tpi = data.parties.indexOf(p);
-              const label = p.name || ('Party '+(data.parties.filter(x=>!x.reserve).indexOf(p)+1));
-              return `<option value="${tpi}">${esc(label)}</option>`;
-            }).join('')}
-          </select>` : ''}
-          <button class="del-btn" onclick="delMember(${pi},${mi})">×</button>
-        </div>`;
-      }).join('')}
-    </div>
-    <div style="padding:0 10px 10px">
-      <button class="add-btn" onclick="addMember(${pi})">+ เพิ่มสมาชิก</button>
-    </div>
-  </div>`;
-}
-
-function esc(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function setClass(pi, mi, val) {
-  data.parties[pi].members[mi].cls = val;
-  const chip = document.getElementById(`chip-${pi}-${mi}`);
-  const sel  = chip ? chip.querySelector('select') : null;
-  if (!chip || !sel) return;
-  CLASSES.forEach(c => { chip.classList.remove(c.chip); sel.classList.remove(c.css); });
-  chip.classList.add(CLASS_MAP[val].chip);
-  sel.classList.add(CLASS_MAP[val].css);
-}
-
-function addMember(pi) { data.parties[pi].members.push(mkMember()); render(); }
-function delMember(pi, mi) { data.parties[pi].members.splice(mi,1); render(); }
-
-function moveToParty(fromPi, mi, toPiStr) {
-  const toPi = parseInt(toPiStr);
-  if (isNaN(toPi) || toPi === fromPi) return;
-  const member = data.parties[fromPi].members.splice(mi, 1)[0];
-  data.parties[toPi].members.push(member);
-  render();
-  // show toast with party name
-  const t = document.getElementById('toast');
-  const targetName = data.parties[toPi].name || 'Party';
-  t.textContent = `✅ ย้ายไป ${targetName} แล้ว!`;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
-}
-
-/* ── drag ───────────────────────────────────────────── */
-function chipDragStart(e, pi, mi) {
-  drag = { pi, mi };
-  e.dataTransfer.effectAllowed = 'move';
-  e.stopPropagation();
-  setTimeout(() => document.getElementById(`chip-${pi}-${mi}`)?.classList.add('dragging'), 0);
-}
-function chipDragEnd()  { clearHighlights(); drag = null; }
-
-function chipDragOver(e, pi, mi) {
-  if (!drag) return;
-  e.preventDefault(); e.stopPropagation();
-  if (drag.pi===pi && drag.mi===mi) return;
-  clearChipHighlights();
-  document.getElementById(`chip-${pi}-${mi}`)?.classList.add('drop-target');
-}
-function chipDragLeave(e, pi, mi) {
-  document.getElementById(`chip-${pi}-${mi}`)?.classList.remove('drop-target');
-}
-function chipDrop(e, tpi, tmi) {
-  e.preventDefault(); e.stopPropagation();
-  if (!drag) return;
-  const { pi:spi, mi:smi } = drag;
-  const src = data.parties[spi].members;
-  const tgt = data.parties[tpi].members;
-  if (spi===tpi) { [src[smi], src[tmi]] = [src[tmi], src[smi]]; }
-  else { const t={...src[smi]}; src[smi]={...tgt[tmi]}; tgt[tmi]=t; }
-  drag = null; render();
-}
-
-function cardDragOver(e, pi) {
-  if (!drag) return; e.preventDefault();
-  const card = document.getElementById(`card-${pi}`);
-  document.querySelectorAll('.party-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
-  card?.classList.add('drag-over');
-}
-function cardDragLeave(e, pi) {
-  const card = document.getElementById(`card-${pi}`);
-  if (card && !card.contains(e.relatedTarget)) card.classList.remove('drag-over');
-}
-function cardDrop(e, tpi) {
-  e.preventDefault();
-  if (!drag) return;
-  const { pi:spi, mi:smi } = drag;
-  if (spi===tpi) { drag=null; clearHighlights(); return; }
-  const m = data.parties[spi].members.splice(smi,1)[0];
-  data.parties[tpi].members.push(m);
-  drag=null; render();
-}
-
-function clearChipHighlights() {
-  document.querySelectorAll('.member-chip.drop-target').forEach(e=>e.classList.remove('drop-target'));
-}
-function clearHighlights() {
-  clearChipHighlights();
-  document.querySelectorAll('.member-chip.dragging').forEach(e=>e.classList.remove('dragging'));
-  document.querySelectorAll('.party-card.drag-over').forEach(e=>e.classList.remove('drag-over'));
-}
-
-/* ── save ───────────────────────────────────────────── */
-function saveData() {
-  try { localStorage.setItem('party-manager-v7', JSON.stringify(data)); } catch(e){}
-  const t = document.getElementById('toast');
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
-}
-
-render();
-</script>
-</body>
-</html>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js">
-  const SUPABASE_URL = "sb_publishable_V4q0n5SMI6E7Bs_Bzpr1mw_cxkp-1Zt";
-const SUPABASE_KEY = "sb_secret_InwNt6W_6S4UMFr_JmOvOw_-vNogqBW";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  async function saveData() {
-  const room = "PARTY001";
-  const admin = "ADMIN999";
-
-  const { error } = await supabaseClient
-    .from("party_rooms")
-    .update({ data: data })
-    .eq("room_code", room)
-    .eq("admin_code", admin);
-
-  const t = document.getElementById('toast');
-
-  if (error) {
-    t.textContent = "❌ บันทึกไม่สำเร็จ";
-  } else {
-    t.textContent = "✅ บันทึกแล้ว!";
-  }
-const { data: result, error } = await supabaseClient
-  .from("party_rooms")
-  .update({ data: data })
-  .eq("room_code", room)
-  .eq("admin_code", admin);
-
-console.log("SAVE RESULT:", result, error);
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
-    async function loadData() {
-  const room = "PARTY001";
-
-  const { data: res } = await supabaseClient
+// ====== LOAD ======
+async function loadData() {
+  const { data: res, error } = await supabaseClient
     .from("party_rooms")
     .select("data")
-    .eq("room_code", room)
+    .eq("room_code", "PARTY001")
     .single();
 
-  if (res && res.data && res.data.parties) {
+  console.log("LOAD:", res, error);
+
+  if (res && res.data) {
     data = res.data;
-    render();
   }
 }
-    loadData();
+
+// ====== SAVE ======
+async function saveData() {
+  const { data: result, error } = await supabaseClient
+    .from("party_rooms")
+    .update({ data: data })
+    .eq("room_code", "PARTY001")
+    .eq("admin_code", "ADMIN999");
+
+  console.log("SAVE:", result, error);
+
+  const el = document.getElementById("status");
+
+  if (error) {
+    el.innerText = "❌ save fail";
+  } else if (!result || result.length === 0) {
+    el.innerText = "❌ admin_code ผิด";
+  } else {
+    el.innerText = "✅ saved!";
+  }
+}
+
+// ====== INIT ======
+loadData();
+
 </script>
+
+</body>
+</html>
