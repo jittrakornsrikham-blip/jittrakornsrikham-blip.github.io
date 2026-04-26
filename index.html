@@ -350,17 +350,18 @@ const mkMember = () => ({ name:'', cls:'none' });
 
 const mkDefaultData = () => ({
   parties: [
-    { name:'Party A1',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party A2',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party A3',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party A4',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party B1',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party B2',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party B3',   members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Party B4', members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Roaming A5', members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'Roaming B5', members: Array(5).fill(0).map(mkMember), reserve:false },
-    { name:'ตัวสำรอง',  members: Array(5).fill(0).map(mkMember), reserve:true  },
+    { name:'A1 ทูใบ้',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'A2 ทูใบ้',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'A3 โค่ว-พี่เตอร์',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'A4 โค่ว-พี่เตอร์',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'B1 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'B2 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'B3 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'B4 เรทหลัก', members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'A5 โรม', members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'B5 ปลวกกินเสา', members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'ตัวสำรอง',  members: Array(6).fill(0).map(mkMember), reserve:true  },
+    { name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true  },
   ]
 });
 
@@ -381,6 +382,11 @@ function normalizeData(d) {
     p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
     if (p.reserve === undefined) p.reserve = false;
   });
+  // migrate: ensure "ไม่ว่าง/ลา" party exists
+  const hasAbsent = d.parties.some(p => p.name === 'ไม่ว่าง/ลา');
+  if (!hasAbsent) {
+    d.parties.push({ name:'ไม่ว่าง/ลา', members: Array(5).fill(0).map(mkMember), reserve:true });
+  }
   return d;
 }
 dataR1 = normalizeData(dataR1);
@@ -423,9 +429,10 @@ function render() {
     const pi = data.parties.indexOf(party);
     html += renderCard(party, pi, PARTY_COLORS[idx % PARTY_COLORS.length], false, idx + 1);
   });
-  reserve.forEach(party => {
+  reserve.forEach((party, ridx) => {
     const pi = data.parties.indexOf(party);
-    html += renderCard(party, pi, '#ffab91', true, null);
+    const reserveColors = ['#ffab91','#ef9a9a'];
+    html += renderCard(party, pi, reserveColors[ridx % reserveColors.length], true, null);
   });
   html += `</div>`;
 
@@ -467,21 +474,22 @@ function renderCard(party, pi, color, isReserve, num) {
             ondragstart="event.stopPropagation()">
             ${CLASSES.map(c=>`<option value="${c.id}" ${c.id===m.cls?'selected':''}>${c.label}</option>`).join('')}
           </select>
-          ${isReserve ? `<select class="move-select" onchange="moveToParty(${pi},${mi},this.value);this.value=''" ondragstart="event.stopPropagation()">
+          <select class="move-select" onchange="moveToParty(${pi},${mi},this.value);this.value=''" ondragstart="event.stopPropagation()">
             <option value="">↪ ย้ายไป...</option>
-            ${data.parties.filter(p=>!p.reserve).map(p=>{
+            ${data.parties.filter((_,i)=>i!==pi).map(p=>{
               const tpi = data.parties.indexOf(p);
-              const label = p.name || ('Party '+(data.parties.filter(x=>!x.reserve).indexOf(p)+1));
+              const label = p.name || ('Party '+(tpi+1));
               return `<option value="${tpi}">${esc(label)}</option>`;
             }).join('')}
-          </select>` : ''}
+          </select>
+          ${isReserve ? `` : ''}
           <button class="del-btn" onclick="delMember(${pi},${mi})">×</button>
         </div>`;
       }).join('')}
     </div>
-    <div style="padding:0 10px 10px">
+    ${isReserve ? `<div style="padding:0 10px 10px">
       <button class="add-btn" onclick="addMember(${pi})">+ เพิ่มสมาชิก</button>
-    </div>
+    </div>` : ''}
   </div>`;
 }
 
@@ -499,7 +507,25 @@ function setClass(pi, mi, val) {
   sel.classList.add(CLASS_MAP[val].css);
 }
 
-function addMember(pi) { data.parties[pi].members.push(mkMember()); render(); }
+function addMember(pi) {
+  const party = data.parties[pi];
+  const MAX_MAIN = 6;
+  if (!party.reserve && party.members.length >= MAX_MAIN) {
+    const reserveParty = data.parties.find(p => p.reserve);
+    if (reserveParty) {
+      reserveParty.members.push(mkMember());
+      render();
+      const t = document.getElementById('toast');
+      const rName = reserveParty.name || 'ตัวสำรอง';
+      t.textContent = '\u26a0\ufe0f ปาร์ตี้เต็ม! เพิ่มไปที่ "' + rName + '" แทน';
+      t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), 2800);
+    }
+  } else {
+    party.members.push(mkMember());
+    render();
+  }
+}
 function delMember(pi, mi) { data.parties[pi].members.splice(mi,1); render(); }
 
 function moveToParty(fromPi, mi, toPiStr) {
