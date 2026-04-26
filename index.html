@@ -503,24 +503,15 @@ function clearHighlights() {
   document.querySelectorAll('.party-card.drag-over').forEach(e=>e.classList.remove('drag-over'));
 }
 
-/* ── save ───────────────────────────────────────────── */
-function saveData() {
-  try { localStorage.setItem('party-manager-v7', JSON.stringify(data)); } catch(e){}
-  const t = document.getElementById('toast');
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
-}
-
 render();
-  <!-- ✅ เพิ่มก่อน </body> -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</script>
 
+<!-- ✅ Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://gjciyhywiabkngsoldgp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqY2l5aHl3aWFia25nc29sZGdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMTgzNDYsImV4cCI6MjA5Mjc5NDM0Nn0.uzEaD7bdrhJk9qZNfGUxiKDHEU8xxQ4pUy5vF3dGhDk"; // 👈 ใส่ของจริง
-
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 const ROOM = "PARTY001";
 const ADMIN = "ADMIN999";
 
@@ -531,9 +522,7 @@ async function loadFromSupabase() {
     .select("data")
     .eq("room_code", ROOM)
     .single();
-
   console.log("LOAD:", res, error);
-
   if (res && res.data) {
     data = res.data;
     render();
@@ -544,17 +533,13 @@ async function loadFromSupabase() {
 async function saveData() {
   // save local backup ก่อน (กันพลาด)
   try { localStorage.setItem('party-manager-v7', JSON.stringify(data)); } catch(e){}
-
   const { data: result, error } = await supabaseClient
     .from("party_rooms")
     .update({ data: data })
     .eq("room_code", ROOM)
     .eq("admin_code", ADMIN);
-
   console.log("SAVE:", result, error);
-
   const t = document.getElementById('toast');
-
   if (error) {
     t.textContent = "❌ บันทึกไม่สำเร็จ (error)";
   } else if (!result || result.length === 0) {
@@ -562,14 +547,12 @@ async function saveData() {
   } else {
     t.textContent = "✅ บันทึกแล้ว!";
   }
-
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
 }
 
 /* ===== INIT ===== */
 loadFromSupabase();
-</script>
 </script>
 </body>
 </html>
