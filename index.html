@@ -7,23 +7,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:       #0f1117;
-    --surface:  #181c27;
-    --surface2: #1f2437;
-    --border:   #2a3050;
-    --text:     #e8eaf6;
-    --muted:    #5a6280;
-    --accent:   #4f8ef7;
+    --bg:       #f5f0f8;
+    --surface:  #ffffff;
+    --surface2: #f0ebf7;
+    --border:   #ddd5ea;
+    --text:     #3d3450;
+    --muted:    #9b8fb0;
+    --accent:   #b39ddb;
 
-    /* class palette */
-    --priest-bg:#3d1a2e; --priest-fg:#f472b6; --priest-border:#9d174d;
-    --sword-bg: #0d2545; --sword-fg: #60a5fa; --sword-border:#1d4ed8;
-    --spear-bg: #2d1515; --spear-fg: #f87171; --spear-border:#b91c1c;
-    --lute-bg:  #0d2a35; --lute-fg:  #38bdf8; --lute-border:#0369a1;
-    --numina-bg:#1e1040; --numina-fg:#c084fc; --numina-border:#7c3aed;
-    --blade-bg: #0d2818; --blade-fg: #34d399; --blade-border:#059669;
-    --fist-bg:  #2d1a08; --fist-fg:  #fb923c; --fist-border:#c2410c;
-    --none-bg:  #1a1f2e; --none-fg:  #6b7280; --none-border:#374151;
+    /* class palette — pastel */
+    --priest-bg:#fce4ec; --priest-fg:#c2185b; --priest-border:#f48fb1;
+    --sword-bg: #e3f2fd; --sword-fg: #1565c0; --sword-border:#90caf9;
+    --spear-bg: #ffeaea; --spear-fg: #c62828; --spear-border:#ef9a9a;
+    --lute-bg:  #e0f7fa; --lute-fg:  #00838f; --lute-border:#80deea;
+    --numina-bg:#ede7f6; --numina-fg:#6a1b9a; --numina-border:#ce93d8;
+    --blade-bg: #e8f5e9; --blade-fg: #2e7d32; --blade-border:#a5d6a7;
+    --fist-bg:  #fff3e0; --fist-fg:  #e65100; --fist-border:#ffcc80;
+    --none-bg:  #f3f0f7; --none-fg:  #9e9e9e; --none-border:#d1c4e9;
   }
 
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -35,8 +35,8 @@
     min-height:100vh;
     padding: 20px 16px 56px;
     background-image:
-      radial-gradient(ellipse at 10% 0%, rgba(79,142,247,.06) 0%, transparent 55%),
-      radial-gradient(ellipse at 90% 100%, rgba(124,58,237,.05) 0%, transparent 55%);
+      radial-gradient(ellipse at 10% 0%, rgba(179,157,219,.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 100%, rgba(206,147,216,.12) 0%, transparent 55%);
   }
 
   /* ── Grid ─────────────────────────────────────────── */
@@ -52,21 +52,21 @@
   /* ── Party Card ───────────────────────────────────── */
   .party-card {
     background: var(--surface);
-    border-radius: 14px;
+    border-radius: 16px;
     border: 1px solid var(--border);
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    box-shadow: 0 2px 12px rgba(100,80,150,.08);
     transition: border-color .2s, box-shadow .2s;
   }
   .party-card.drag-over {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(79,142,247,.3), 0 4px 20px rgba(0,0,0,.4);
+    box-shadow: 0 0 0 2px rgba(179,157,219,.4), 0 4px 20px rgba(100,80,150,.12);
   }
 
   /* reserve card */
   .party-card.reserve-card {
-    border: 1px dashed #a16207;
-    background: #141008;
+    border: 1px dashed #f0b97a;
+    background: #fffbf5;
   }
 
   /* ── Party Header ─────────────────────────────────── */
@@ -103,7 +103,7 @@
   }
   .party-name-input::placeholder { color: var(--muted); font-size:.85rem; }
   .party-name-input:focus {
-    background: rgba(79,142,247,.08);
+    background: rgba(179,157,219,.12);
     border-radius: 5px;
     padding: 2px 6px;
   }
@@ -112,8 +112,8 @@
     font-family: 'Kanit', sans-serif;
     font-size: .65rem;
     font-weight: 700;
-    background: #92400e;
-    color: #fbbf24;
+    background: #ffe0b2;
+    color: #e65100;
     border-radius: 20px;
     padding: 2px 10px;
     white-space: nowrap;
@@ -130,7 +130,7 @@
     align-items: center;
     gap: 6px;
     padding: 6px 8px;
-    border-radius: 9px;
+    border-radius: 10px;
     margin-bottom: 5px;
     border-left: 3px solid var(--none-border);
     background: var(--none-bg);
@@ -138,10 +138,10 @@
     transition: background .15s, box-shadow .15s, opacity .15s, border-color .15s, transform .1s;
   }
   .member-chip:last-of-type { margin-bottom: 0; }
-  .member-chip:hover { transform: translateX(2px); box-shadow: 0 2px 10px rgba(0,0,0,.35); }
-  .member-chip.dragging { opacity:.3; cursor:grabbing; }
+  .member-chip:hover { transform: translateX(2px); box-shadow: 0 2px 10px rgba(100,80,150,.12); }
+  .member-chip.dragging { opacity:.35; cursor:grabbing; }
   .member-chip.drop-target {
-    box-shadow: 0 0 0 2px var(--accent), 0 2px 10px rgba(0,0,0,.35);
+    box-shadow: 0 0 0 2px var(--accent), 0 2px 10px rgba(100,80,150,.15);
   }
 
   /* class-specific chip colours */
@@ -170,7 +170,7 @@
     user-select: text;
   }
   .member-name-input::placeholder { color: var(--muted); font-size:.8rem; font-weight:400; }
-  .member-name-input:focus { background:rgba(255,255,255,.04); border-radius:4px; padding:1px 5px; }
+  .member-name-input:focus { background:rgba(179,157,219,.1); border-radius:4px; padding:1px 5px; }
 
   /* ── Class Select ─────────────────────────────────── */
   .class-select {
@@ -184,7 +184,7 @@
     outline: none;
     flex-shrink: 0;
     appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23aaa'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%239b8fb0'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 6px center;
     transition: opacity .15s;
@@ -193,7 +193,7 @@
   .class-select:hover { opacity:.85; }
 
   /* class select colours */
-  .cls-none   { background:#1e2333; color:#6b7280; border-color:#374151; }
+  .cls-none   { background:#f3f0f7; color:#9e9e9e; border-color:#d1c4e9; }
   .cls-priest { background:var(--priest-bg); color:var(--priest-fg); border-color:var(--priest-border); }
   .cls-sword  { background:var(--sword-bg);  color:var(--sword-fg);  border-color:var(--sword-border);  }
   .cls-spear  { background:var(--spear-bg);  color:var(--spear-fg);  border-color:var(--spear-border);  }
@@ -208,7 +208,7 @@
     cursor: pointer; font-size:.95rem; line-height:1; padding:0 2px;
     flex-shrink:0; transition: color .15s;
   }
-  .del-btn:hover { color: #ef4444; }
+  .del-btn:hover { color: #e57373; }
 
   .add-btn {
     width: 100%; background: none;
@@ -218,7 +218,7 @@
     padding: 6px; border-radius: 8px; cursor: pointer;
     margin-top: 8px; transition: all .15s;
   }
-  .add-btn:hover { background:rgba(79,142,247,.08); color:var(--accent); border-color:var(--accent); }
+  .add-btn:hover { background:rgba(179,157,219,.12); color:#7c5cbf; border-color:var(--accent); }
 
   /* ── Reserve Row ──────────────────────────────────── */
   .reserve-row { margin-bottom: 20px; }
@@ -226,30 +226,54 @@
   /* ── Save Bar ─────────────────────────────────────── */
   .save-bar { text-align:center; margin-top:4px; }
   .save-btn {
-    background: linear-gradient(135deg,#3b5ddb,#6d28d9);
+    background: linear-gradient(135deg,#b39ddb,#f48fb1);
     color:#fff; border:none;
     font-family:'Kanit',sans-serif; font-size:.95rem; font-weight:700;
     padding: 11px 42px; border-radius:30px; cursor:pointer;
     letter-spacing:.08em;
-    box-shadow: 0 4px 20px rgba(59,93,219,.35);
+    box-shadow: 0 4px 20px rgba(179,157,219,.45);
     transition: all .2s;
   }
-  .save-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(59,93,219,.5); }
+  .save-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(179,157,219,.6); }
 
   /* ── Toast ────────────────────────────────────────── */
   .toast {
     position:fixed; bottom:28px; left:50%;
     transform:translateX(-50%) translateY(60px);
-    background:#22304a; color:#e0f0ff;
+    background:#f3e5f5; color:#6a1b9a;
     font-family:'Kanit',sans-serif; font-size:.88rem;
     padding:10px 28px; border-radius:30px;
-    border:1px solid #3b5ddb;
+    border:1px solid #ce93d8;
     opacity:0; transition:all .3s; pointer-events:none; z-index:999;
   }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
   /* ── Color-bar top of each card ───────────────────── */
-  .party-color-bar { height: 3px; width:100%; }
+  .party-color-bar { height: 4px; width:100%; }
+
+  /* ── Move-to select (reserve only) ───────────────── */
+  .move-select {
+    font-family: 'Kanit', sans-serif;
+    font-size: .68rem;
+    font-weight: 700;
+    border: 1px solid #f0b97a;
+    border-radius: 20px;
+    padding: 3px 20px 3px 8px;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+    appearance: none; -webkit-appearance: none;
+    background-color: #fff8f0;
+    color: #c2620a;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23c2620a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    transition: all .15s;
+    letter-spacing: .03em;
+    max-width: 110px;
+  }
+  .move-select:hover { background-color:#ffe8cc; border-color:#e07020; }
+  .move-select:focus { border-color:#e07020; }
 </style>
 </head>
 <body>
@@ -260,7 +284,7 @@
 <div class="toast" id="toast">✅ บันทึกแล้ว!</div>
 
 <script>
-const PARTY_COLORS = ['#4f8ef7','#f97316','#10b981','#ec4899','#14b8a6','#a855f7','#ef4444','#f59e0b'];
+const PARTY_COLORS = ['#b39ddb','#f48fb1','#80cbc4','#ffe082','#80deea','#ef9a9a','#a5d6a7','#ffab91'];
 
 const CLASSES = [
   { id:'none',   label:'— คลาส —',     css:'cls-none',   chip:'chip-none'   },
@@ -321,21 +345,17 @@ function render() {
   const reserve = data.parties.filter(p =>  p.reserve);
   let html = '';
 
+  // รวม main + reserve ใน grid เดียวกัน (reserve ต่อท้าย main)
   html += `<div class="parties-grid">`;
   main.forEach((party, idx) => {
     const pi = data.parties.indexOf(party);
     html += renderCard(party, pi, PARTY_COLORS[idx % PARTY_COLORS.length], false, idx + 1);
   });
+  reserve.forEach(party => {
+    const pi = data.parties.indexOf(party);
+    html += renderCard(party, pi, '#ffab91', true, null);
+  });
   html += `</div>`;
-
-  if (reserve.length) {
-    html += `<div class="reserve-row">`;
-    reserve.forEach(party => {
-      const pi = data.parties.indexOf(party);
-      html += renderCard(party, pi, '#d97706', true, null);
-    });
-    html += `</div>`;
-  }
 
   document.getElementById('app').innerHTML = html;
 }
@@ -375,6 +395,14 @@ function renderCard(party, pi, color, isReserve, num) {
             ondragstart="event.stopPropagation()">
             ${CLASSES.map(c=>`<option value="${c.id}" ${c.id===m.cls?'selected':''}>${c.label}</option>`).join('')}
           </select>
+          ${isReserve ? `<select class="move-select" onchange="moveToParty(${pi},${mi},this.value);this.value=''" ondragstart="event.stopPropagation()">
+            <option value="">↪ ย้ายไป...</option>
+            ${data.parties.filter(p=>!p.reserve).map(p=>{
+              const tpi = data.parties.indexOf(p);
+              const label = p.name || ('Party '+(data.parties.filter(x=>!x.reserve).indexOf(p)+1));
+              return `<option value="${tpi}">${esc(label)}</option>`;
+            }).join('')}
+          </select>` : ''}
           <button class="del-btn" onclick="delMember(${pi},${mi})">×</button>
         </div>`;
       }).join('')}
@@ -391,7 +419,6 @@ function esc(s) {
 
 function setClass(pi, mi, val) {
   data.parties[pi].members[mi].cls = val;
-  // update chip and select colours without full re-render
   const chip = document.getElementById(`chip-${pi}-${mi}`);
   const sel  = chip ? chip.querySelector('select') : null;
   if (!chip || !sel) return;
@@ -402,6 +429,20 @@ function setClass(pi, mi, val) {
 
 function addMember(pi) { data.parties[pi].members.push(mkMember()); render(); }
 function delMember(pi, mi) { data.parties[pi].members.splice(mi,1); render(); }
+
+function moveToParty(fromPi, mi, toPiStr) {
+  const toPi = parseInt(toPiStr);
+  if (isNaN(toPi) || toPi === fromPi) return;
+  const member = data.parties[fromPi].members.splice(mi, 1)[0];
+  data.parties[toPi].members.push(member);
+  render();
+  // show toast with party name
+  const t = document.getElementById('toast');
+  const targetName = data.parties[toPi].name || 'Party';
+  t.textContent = `✅ ย้ายไป ${targetName} แล้ว!`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
 
 /* ── drag ───────────────────────────────────────────── */
 function chipDragStart(e, pi, mi) {
