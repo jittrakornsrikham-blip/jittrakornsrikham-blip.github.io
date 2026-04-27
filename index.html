@@ -16,9 +16,9 @@
     --accent:   #b39ddb;
 
     /* class palette — matched to reference image */
-    --priest-bg:#f4a261; --priest-fg:#fff; --priest-border:#ffcc99;
+    --priest-bg:#e63946; --priest-fg:#fff; --priest-border:#ffa0a8;
     --sword-bg: #2ec4b6; --sword-fg: #fff; --sword-border:#a8f0ea;
-    --spear-bg: #e63946; --spear-fg: #fff; --spear-border:#ffa0a8;
+    --spear-bg: #d00000; --spear-fg: #fff; --spear-border:#ff4d4d;
     --lute-bg:  #457b9d; --lute-fg:  #fff; --lute-border:#a8d0e8;
     --numina-bg:#9b5de5; --numina-fg:#fff; --numina-border:#d4aaff;
     --blade-bg: #43aa8b; --blade-fg: #fff; --blade-border:#aaedd8;
@@ -157,6 +157,14 @@
   .chip-none   { background:var(--none-bg);   border-left-color:var(--none-border);   border-color: var(--none-border);   }
 
   .drag-handle { color: var(--muted); font-size:.8rem; flex-shrink:0; opacity:.5; }
+
+  .class-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+  }
 
   .member-name-input {
     font-family: 'Sarabun', 'Kanit', sans-serif;
@@ -357,14 +365,14 @@
 const PARTY_COLORS = ['#b39ddb','#f48fb1','#80cbc4','#ffe082','#80deea','#ef9a9a','#a5d6a7','#ffab91'];
 
 const CLASSES = [
-  { id:'none',   label:'— คลาส —',     css:'cls-none',   chip:'chip-none'   },
-  { id:'priest', label:'พระ',           css:'cls-priest', chip:'chip-priest' },
-  { id:'sword',  label:'ดาบ',           css:'cls-sword',  chip:'chip-sword'  },
-  { id:'spear',  label:'ทวน',          css:'cls-spear',  chip:'chip-spear'  },
-  { id:'lute',   label:'พิณ',           css:'cls-lute',   chip:'chip-lute'   },
-  { id:'numina', label:'นูมิน่า',       css:'cls-numina', chip:'chip-numina' },
-  { id:'blade',  label:'กระบี่สายฟ้า', css:'cls-blade',  chip:'chip-blade'  },
-  { id:'fist',   label:'หมัด',          css:'cls-fist',   chip:'chip-fist'   },
+  { id:'none',   label:'— คลาส —',     css:'cls-none',   chip:'chip-none',   icon:'' },
+  { id:'priest', label:'พระ',           css:'cls-priest', chip:'chip-priest', icon:'https://p11-sign.douyinpic.com/tos-cn-i-dy/f408efb7862c4d57a11b4f818ab859cd~tplv-dy-water-v2:5oqW6Z-z5Y-377yaSkhzaHVtaXl1YW4=:592:600.webp?lk3s=138a59ce&x-expires=1779886800&x-signature=1%2Bfzr7A0Pa6K7AawmStf7qB3E48%3D&sig=7yrHXUvxccKHvzdNdxUfxvTarM4%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=false&sc=image&biz_tag=aweme_images&l=202604272100018C8F2C37A2911FADEDF6' },
+  { id:'sword',  label:'ดาบ',           css:'cls-sword',  chip:'chip-sword',  icon:'https://p11-sign.douyinpic.com/tos-cn-i-dy/aea08338884b4bc1942aa02437fb0e5f~tplv-dy-water-v2:5oqW6Z-z5Y-377yaSkhzaHVtaXl1YW4=:592:618.webp?lk3s=138a59ce&x-expires=1779886800&x-signature=sPnMgv%2Bvet2ZZXJKwWC%2F3x31aAM%3D&sig=3FVgv-3i2b9br2XryzZcH0PvanU%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=false&sc=image&biz_tag=aweme_images&l=202604272100018C8F2C37A2911FADEDF6'  },
+  { id:'spear',  label:'ทวน',          css:'cls-spear',  chip:'chip-spear',  icon:'https://p11-sign.douyinpic.com/tos-cn-i-dy/b5dfabb9d8a2422fbf3311d24cc4826c~tplv-dy-water-v2:5oqW6Z-z5Y-377yaSkhzaHVtaXl1YW4=:592:618.webp?lk3s=138a59ce&x-expires=1779886800&x-signature=Pp2WNZ02e4XQgdA%2BIf7zMs%2FbfZk%3D&sig=Jjdg9iLI6SsnJsh4gLb-_eeVWDo%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=false&sc=image&biz_tag=aweme_images&l=202604272100018C8F2C37A2911FADEDF6'  },
+  { id:'lute',   label:'พิณ',           css:'cls-lute',   chip:'chip-lute',   icon:'https://p26-sign.douyinpic.com/tos-cn-i-dy/a5234ce25fad4bf2b738998eea99ff4b~tplv-dy-water-v2:5oqW6Z-z5Y-377yaSkhzaHVtaXl1YW4=:590:624.webp?lk3s=138a59ce&x-expires=1779886800&x-signature=tyCo9%2FEBAhm31cMAYtZkWdSVQ4A%3D&sig=opyj4Sk_5YYzp0YMvLeaT02GjD8%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=false&sc=image&biz_tag=aweme_images&l=202604272100018C8F2C37A2911FADEDF6'   },
+  { id:'numina', label:'นูมิน่า',       css:'cls-numina', chip:'chip-numina', icon:'https://p5-ex-gddgtc-sign.douyinpic.com/tos-cn-i-dy/5ae410b2b751478f893557b8c6e0636a~tplv-dy-water-v2:5oqW6Z-z5Y-377yaSkhzaHVtaXl1YW4=:545:607.webp?lk3s=138a59ce&x-expires=1779886800&x-signature=ZkpUF6Ul2VcFV6bYzhTf9MJXeN8%3D&sig=GFUIZaboKLKS42TE8tqBbacUZaM%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=false&sc=image&biz_tag=aweme_images&l=202604272100018C8F2C37A2911FADEDF6' },
+  { id:'blade',  label:'กระบี่สายฟ้า', css:'cls-blade',  chip:'chip-blade',  icon:'https://p3-sign.douyinpic.com/tos-cn-i-dy/3fe40890e510496cbed8629e21336765~tplv-dy-water-v2:5oqW6Z-z5Y-377yaSkhzaHVtaXl1YW4=:592:618.webp?lk3s=138a59ce&x-expires=1779886800&x-signature=%2F9kKCblHBNJB61LXa3OGSz3RMHg%3D&sig=6Mf99YrNBjvciamohmyGZPo6q1E%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=false&sc=image&biz_tag=aweme_images&l=202604272100018C8F2C37A2911FADEDF6'  },
+  { id:'fist',   label:'หมัด',          css:'cls-fist',   chip:'chip-fist',   icon:'https://p11-sign.douyinpic.com/tos-cn-i-dy/77def996e69e476a96693dfb8fa5758f~tplv-dy-water-v2:5oqW6Z-z5Y-377yaSkhzaHVtaXl1YW4=:574:600.webp?lk3s=138a59ce&x-expires=1779886800&x-signature=ZH63ylCgaESFcOYSGP5Wi44r2rg%3D&sig=cVylBc39c7hq5CH744N3Znxybto%3D&from=327834062&s=PackSourceEnum_DOUYIN_REFLOW&se=false&sc=image&biz_tag=aweme_images&l=202604272100018C8F2C37A2911FADEDF6'   },
 ];
 const CLASS_MAP = Object.fromEntries(CLASSES.map(c => [c.id, c]));
 
@@ -488,6 +496,7 @@ function renderCard(party, pi, color, isReserve, num) {
           ondrop="chipDrop(event,${pi},${mi})"
         >
           <span class="drag-handle">⠿</span>
+          ${cls.icon ? `<img src="${cls.icon}" class="class-icon" alt="${cls.label}" draggable="false">` : ''}
           <input class="member-name-input" value="${esc(m.name)}" placeholder="ชื่อผู้เล่น..."
             oninput="data.parties[${pi}].members[${mi}].name=this.value"
             ondragstart="event.stopPropagation()" />
