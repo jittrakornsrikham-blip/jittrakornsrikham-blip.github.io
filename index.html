@@ -15,14 +15,14 @@
     --muted:    #9b8fb0;
     --accent:   #b39ddb;
 
-    /* class palette — pastel */
-    --priest-bg:#fcd4e4; --priest-fg:#ad1457; --priest-border:#f06292;
-    --sword-bg: #e3f2fd; --sword-fg: #1565c0; --sword-border:#90caf9;
-    --spear-bg: #ffebee; --spear-fg: #c62828; --spear-border:#ef5350;
-    --lute-bg:  #e0f7fa; --lute-fg:  #00838f; --lute-border:#80deea;
-    --numina-bg:#ede7f6; --numina-fg:#6a1b9a; --numina-border:#ce93d8;
-    --blade-bg: #e8f5e9; --blade-fg: #2e7d32; --blade-border:#a5d6a7;
-    --fist-bg:  #fff3e0; --fist-fg:  #e65100; --fist-border:#ffcc80;
+    /* class palette — vivid bold */
+    --priest-bg:#c2185b; --priest-fg:#fff; --priest-border:#ff80ab;
+    --sword-bg: #00838f; --sword-fg: #fff; --sword-border:#80ffee;
+    --spear-bg: #b71c1c; --spear-fg: #fff; --spear-border:#ff6e6e;
+    --lute-bg:  #1565c0; --lute-fg:  #fff; --lute-border:#82b1ff;
+    --numina-bg:#6a1b9a; --numina-fg:#fff; --numina-border:#ea80fc;
+    --blade-bg: #2e7d32; --blade-fg: #fff; --blade-border:#b9f6ca;
+    --fist-bg:  #e65100; --fist-fg:  #fff; --fist-border:#ffd180;
     --none-bg:  #f3f0f7; --none-fg:  #9e9e9e; --none-border:#d1c4e9;
   }
 
@@ -132,7 +132,9 @@
     padding: 6px 8px;
     border-radius: 10px;
     margin-bottom: 5px;
-    border-left: 3px solid var(--none-border);
+    border-left: 4px solid var(--none-border);
+    border: 1.5px solid transparent;
+    border-left: 4px solid var(--none-border);
     background: var(--none-bg);
     cursor: grab;
     transition: background .15s, box-shadow .15s, opacity .15s, border-color .15s, transform .1s;
@@ -144,21 +146,21 @@
     box-shadow: 0 0 0 2px var(--accent), 0 2px 10px rgba(100,80,150,.15);
   }
 
-  /* class-specific chip colours */
-  .chip-priest { background:var(--priest-bg); border-left-color:var(--priest-border); }
-  .chip-sword  { background:var(--sword-bg);  border-left-color:var(--sword-border);  }
-  .chip-spear  { background:var(--spear-bg);  border-left-color:var(--spear-border);  }
-  .chip-lute   { background:var(--lute-bg);   border-left-color:var(--lute-border);   }
-  .chip-numina { background:var(--numina-bg); border-left-color:var(--numina-border); }
-  .chip-blade  { background:var(--blade-bg);  border-left-color:var(--blade-border);  }
-  .chip-fist   { background:var(--fist-bg);   border-left-color:var(--fist-border);   }
-  .chip-none   { background:var(--none-bg);   border-left-color:var(--none-border);   }
+  /* class-specific chip colours — vivid */
+  .chip-priest { background:var(--priest-bg); border-left-color:var(--priest-border); border-color: var(--priest-border); }
+  .chip-sword  { background:var(--sword-bg);  border-left-color:var(--sword-border);  border-color: var(--sword-border);  }
+  .chip-spear  { background:var(--spear-bg);  border-left-color:var(--spear-border);  border-color: var(--spear-border);  }
+  .chip-lute   { background:var(--lute-bg);   border-left-color:var(--lute-border);   border-color: var(--lute-border);   }
+  .chip-numina { background:var(--numina-bg); border-left-color:var(--numina-border); border-color: var(--numina-border); }
+  .chip-blade  { background:var(--blade-bg);  border-left-color:var(--blade-border);  border-color: var(--blade-border);  }
+  .chip-fist   { background:var(--fist-bg);   border-left-color:var(--fist-border);   border-color: var(--fist-border);   }
+  .chip-none   { background:var(--none-bg);   border-left-color:var(--none-border);   border-color: var(--none-border);   }
 
   .drag-handle { color: var(--muted); font-size:.8rem; flex-shrink:0; opacity:.5; }
 
   .member-name-input {
     font-family: 'Sarabun', 'Kanit', sans-serif;
-    font-size: .92rem;
+    font-size: .95rem;
     font-weight: 600;
     color: var(--text);
     border: none;
@@ -168,7 +170,24 @@
     min-width: 0;
     cursor: text;
     user-select: text;
+    letter-spacing: .01em;
   }
+  .chip-priest .member-name-input,
+  .chip-sword  .member-name-input,
+  .chip-spear  .member-name-input,
+  .chip-lute   .member-name-input,
+  .chip-numina .member-name-input,
+  .chip-blade  .member-name-input,
+  .chip-fist   .member-name-input { color: #f0f0f0; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+  .chip-priest .drag-handle, .chip-sword .drag-handle, .chip-spear .drag-handle,
+  .chip-lute .drag-handle, .chip-numina .drag-handle, .chip-blade .drag-handle,
+  .chip-fist .drag-handle { color: rgba(255,255,255,.6); }
+  .chip-priest .del-btn, .chip-sword .del-btn, .chip-spear .del-btn,
+  .chip-lute .del-btn, .chip-numina .del-btn, .chip-blade .del-btn,
+  .chip-fist .del-btn { color: rgba(255,255,255,.7); }
+  .chip-priest .del-btn:hover, .chip-sword .del-btn:hover, .chip-spear .del-btn:hover,
+  .chip-lute .del-btn:hover, .chip-numina .del-btn:hover, .chip-blade .del-btn:hover,
+  .chip-fist .del-btn:hover { color: #ffcdd2; }
   .member-name-input::placeholder { color: var(--muted); font-size:.8rem; font-weight:400; }
   .member-name-input:focus { background:rgba(179,157,219,.1); border-radius:4px; padding:1px 5px; }
 
@@ -194,13 +213,13 @@
 
   /* class select colours */
   .cls-none   { background:#f3f0f7; color:#9e9e9e; border-color:#d1c4e9; }
-  .cls-priest { background:var(--priest-bg); color:var(--priest-fg); border-color:var(--priest-border); }
-  .cls-sword  { background:var(--sword-bg);  color:var(--sword-fg);  border-color:var(--sword-border);  }
-  .cls-spear  { background:var(--spear-bg);  color:var(--spear-fg);  border-color:var(--spear-border);  }
-  .cls-lute   { background:var(--lute-bg);   color:var(--lute-fg);   border-color:var(--lute-border);   }
-  .cls-numina { background:var(--numina-bg); color:var(--numina-fg); border-color:var(--numina-border); }
-  .cls-blade  { background:var(--blade-bg);  color:var(--blade-fg);  border-color:var(--blade-border);  }
-  .cls-fist   { background:var(--fist-bg);   color:var(--fist-fg);   border-color:var(--fist-border);   }
+  .cls-priest { background:rgba(0,0,0,.25); color:#fff; border-color:var(--priest-border); }
+  .cls-sword  { background:rgba(0,0,0,.25); color:#fff; border-color:var(--sword-border);  }
+  .cls-spear  { background:rgba(0,0,0,.25); color:#fff; border-color:var(--spear-border);  }
+  .cls-lute   { background:rgba(0,0,0,.25); color:#fff; border-color:var(--lute-border);   }
+  .cls-numina { background:rgba(0,0,0,.25); color:#fff; border-color:var(--numina-border); }
+  .cls-blade  { background:rgba(0,0,0,.25); color:#fff; border-color:var(--blade-border);  }
+  .cls-fist   { background:rgba(0,0,0,.25); color:#fff; border-color:var(--fist-border);   }
 
   /* ── Buttons ──────────────────────────────────────── */
   .del-btn {
@@ -325,6 +344,8 @@
   <button class="tab-btn" id="tab-r2" onclick="switchRound(2)">🏆 รอบสอง</button>
   <button class="tab-btn" style="border-color:#80cbc4; color:#00838f;" onclick="loadFromSupabase()">🔄 โหลดข้อมูล</button>
   <button class="tab-btn" style="border-color:#b39ddb; color:#7c5cbf;" onclick="saveData()">💾 บันทึกข้อมูล</button>
+  <button class="tab-btn" style="border-color:#81c784; color:#2e7d32; background:#f1f8e9;" onclick="triggerCsvImport()">📥 Import CSV</button>
+  <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCsvImport(event)">
   <button class="copy-round-btn" id="copy-btn" style="display:none" onclick="copyRound1()">📋 คัดลอกจากรอบแรก</button>
 </div>
 <div id="app"></div>
@@ -474,7 +495,7 @@ function renderCard(party, pi, color, isReserve, num) {
             ondragstart="event.stopPropagation()">
             ${CLASSES.map(c=>`<option value="${c.id}" ${c.id===m.cls?'selected':''}>${c.label}</option>`).join('')}
           </select>
-          <select class="move-select" onchange="moveToParty(${pi},${mi},this.value);this.value=''" ondragstart="event.stopPropagation()">
+          <select class="move-select" onchange="moveToParty(${pi},${mi},this.value);this.value=''" ondragstart="event.stopPropagation()" ${isReserve ? '' : 'style="display:none"'}>
             <option value="">↪ ย้ายไป...</option>
             ${data.parties.filter((_,i)=>i!==pi).map(p=>{
               const tpi = data.parties.indexOf(p);
@@ -599,6 +620,98 @@ function clearHighlights() {
   clearChipHighlights();
   document.querySelectorAll('.member-chip.dragging').forEach(e=>e.classList.remove('dragging'));
   document.querySelectorAll('.party-card.drag-over').forEach(e=>e.classList.remove('drag-over'));
+}
+
+/* ── CSV Import ─────────────────────────────────────── */
+const CHAR_CLASS_MAP = {
+  'ไนท์เวคเกอร์': 'sword',
+  'ซิลฟ์':        'priest',
+  'นูมิน่า':      'numina',
+  'เซเลสทูน':    'lute',
+  'ไอรอนแคลค':   'fist',
+  'บลัดสตรอม':   'spear',
+  'ดราก้อนสเวลท์': 'blade',
+};
+
+const READY_KEYWORDS  = ['พร้อมลงวอร์', 'พร้อม'];
+const ABSENT_KEYWORDS = ['ไม่ว่างลง', 'ติดธุระ', 'ไม่ว่าง', 'ลา'];
+
+function triggerCsvImport() {
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-file-input').click();
+}
+
+function handleCsvImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try { parseCsvAndImport(e.target.result); }
+    catch(err) { alert('❌ เกิดข้อผิดพลาด: ' + err.message); }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCsvAndImport(csvText) {
+  const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
+  if (lines.length < 2) { alert('❌ CSV ต้องมีอย่างน้อย 2 แถว (header + ข้อมูล)'); return; }
+
+  const header = parseCsvRow(lines[0]).map(h => h.trim().toLowerCase());
+
+  const nameIdx   = header.findIndex(h => ['ชื่อ','ชื่อตัวละคร','character','name','ชื่อผู้เล่น'].includes(h));
+  const classIdx  = header.findIndex(h => ['อาชีพ','class','job','คลาส','role'].includes(h));
+  const statusIdx = header.findIndex(h => ['สถานะ','status','พร้อม','ลงวอร์'].includes(h));
+
+  if (nameIdx === -1) { alert('❌ ไม่พบ column ชื่อตัวละคร\nต้องมีชื่อ column: ชื่อ / ชื่อตัวละคร / name'); return; }
+
+  const reserveParty = data.parties.find(p => p.reserve && p.name === 'ตัวสำรอง');
+  const absentParty  = data.parties.find(p => p.reserve && p.name === 'ไม่ว่าง/ลา');
+
+  let importedReady = 0, importedAbsent = 0, skipped = 0;
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols    = parseCsvRow(lines[i]);
+    const rawName = (cols[nameIdx] || '').trim();
+    if (!rawName) { skipped++; continue; }
+
+    let cls = 'none';
+    if (classIdx !== -1) {
+      const rawClass = (cols[classIdx] || '').trim();
+      cls = CHAR_CLASS_MAP[rawClass] || 'none';
+    }
+
+    let dest = null;
+    if (statusIdx !== -1) {
+      const rawStatus = (cols[statusIdx] || '').trim();
+      if (READY_KEYWORDS.some(k => rawStatus.includes(k)))  dest = 'reserve';
+      else if (ABSENT_KEYWORDS.some(k => rawStatus.includes(k))) dest = 'absent';
+      else { skipped++; continue; }
+    } else {
+      dest = 'reserve';
+    }
+
+    const member = { name: rawName, cls };
+    if (dest === 'reserve' && reserveParty) { reserveParty.members.push(member); importedReady++; }
+    else if (dest === 'absent' && absentParty) { absentParty.members.push(member); importedAbsent++; }
+  }
+
+  render();
+  const t = document.getElementById('toast');
+  t.textContent = `📥 Import แล้ว! พร้อมลงวอร์: ${importedReady} | ไม่ว่าง/ลา: ${importedAbsent}${skipped ? ` | ข้าม: ${skipped}` : ''}`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+function parseCsvRow(row) {
+  const result = []; let cur = '', inQ = false;
+  for (let i = 0; i < row.length; i++) {
+    const c = row[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result.map(s => s.replace(/^"|"$/g,''));
 }
 
 render();
