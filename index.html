@@ -15,14 +15,14 @@
     --muted:    #9b8fb0;
     --accent:   #b39ddb;
 
-    /* class palette — vivid bold */
-    --priest-bg:#c2185b; --priest-fg:#fff; --priest-border:#ff80ab;
-    --sword-bg: #00838f; --sword-fg: #fff; --sword-border:#80ffee;
-    --spear-bg: #b71c1c; --spear-fg: #fff; --spear-border:#ff6e6e;
-    --lute-bg:  #1565c0; --lute-fg:  #fff; --lute-border:#82b1ff;
-    --numina-bg:#6a1b9a; --numina-fg:#fff; --numina-border:#ea80fc;
-    --blade-bg: #2e7d32; --blade-fg: #fff; --blade-border:#b9f6ca;
-    --fist-bg:  #e65100; --fist-fg:  #fff; --fist-border:#ffd180;
+    /* class palette — matched to reference image */
+    --priest-bg:#f4a261; --priest-fg:#fff; --priest-border:#ffcc99;
+    --sword-bg: #2ec4b6; --sword-fg: #fff; --sword-border:#a8f0ea;
+    --spear-bg: #e63946; --spear-fg: #fff; --spear-border:#ffa0a8;
+    --lute-bg:  #457b9d; --lute-fg:  #fff; --lute-border:#a8d0e8;
+    --numina-bg:#9b5de5; --numina-fg:#fff; --numina-border:#d4aaff;
+    --blade-bg: #43aa8b; --blade-fg: #fff; --blade-border:#aaedd8;
+    --fist-bg:  #f9844a; --fist-fg:  #fff; --fist-border:#ffc2a0;
     --none-bg:  #f3f0f7; --none-fg:  #9e9e9e; --none-border:#d1c4e9;
   }
 
@@ -346,6 +346,7 @@
   <button class="tab-btn" style="border-color:#b39ddb; color:#7c5cbf;" onclick="saveData()">💾 บันทึกข้อมูล</button>
   <button class="tab-btn" style="border-color:#81c784; color:#2e7d32; background:#f1f8e9;" onclick="triggerCsvImport()">📥 Import CSV</button>
   <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCsvImport(event)">
+  <button class="tab-btn" style="border-color:#ffb74d; color:#e65100; background:#fff8f0;" onclick="downloadJpg()">🖼 ดาวน์โหลด JPG</button>
   <button class="copy-round-btn" id="copy-btn" style="display:none" onclick="copyRound1()">📋 คัดลอกจากรอบแรก</button>
 </div>
 <div id="app"></div>
@@ -865,5 +866,33 @@ showLoginModal(); // แสดง login modal ก่อนเลย
     </div>
   </div>
 </div>
+<!-- html2canvas for JPG export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+async function downloadJpg() {
+  const btn = document.querySelector('[onclick="downloadJpg()"]');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ กำลังสร้าง...';
+  btn.disabled = true;
+  try {
+    const el = document.getElementById('app');
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#f5f0f8',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+    const link = document.createElement('a');
+    link.download = `party-${currentRound === 1 ? 'r1' : 'r2'}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.92);
+    link.click();
+  } catch(e) {
+    alert('❌ ดาวน์โหลดไม่สำเร็จ: ' + e.message);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+</script>
 </body>
 </html>
