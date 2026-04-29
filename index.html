@@ -623,6 +623,7 @@
   <button class="tab-btn" id="tab-r3" onclick="switchRound(3)">🥊 รอบซ้อมที่ 1</button>
   <button class="tab-btn" id="tab-r4" onclick="switchRound(4)">🥊 รอบซ้อมที่ 2</button>
   <button class="tab-btn" id="tab-r5" onclick="switchRound(5)">🥊 รอบซ้อมที่ 3</button>
+  <button class="tab-btn" id="tab-summary" onclick="switchRound(0)">📊 สรุป</button>
   <button class="tab-btn" style="border-color:#80cbc4; color:#00838f;" onclick="loadFromSupabase()">🔄 โหลดข้อมูล</button>
   <button class="tab-btn" style="border-color:#b39ddb; color:#7c5cbf;" onclick="saveData()">💾 บันทึกข้อมูล</button>
   <button class="tab-btn" style="border-color:#81c784; color:#2e7d32; background:#f1f8e9;" onclick="triggerCsvImport()">📥 Import CSV</button>
@@ -724,15 +725,20 @@ let data = dataR1; // pointer ไปยัง round ปัจจุบัน
 
 function switchRound(r) {
   currentRound = r;
-  data = getRoundData(r);
+  if (r !== 0) data = getRoundData(r);
   [1,2,3,4,5].forEach(n => {
     const btn = document.getElementById('tab-r' + n);
     if (btn) btn.classList.toggle('active', n === r);
   });
+  const sumBtn = document.getElementById('tab-summary');
+  if (sumBtn) sumBtn.classList.toggle('active', r === 0);
   document.getElementById('copy-btn').style.display = r === 2 ? 'inline-block' : 'none';
+  // hide/show search bar
+  document.getElementById('search-bar').style.display = r === 0 ? 'none' : '';
   clearSearch();
   filterClass = 'all';
-  render();
+  if (r === 0) renderSummary();
+  else render();
 }
 
 function copyRound1() {
@@ -777,19 +783,53 @@ function render() {
 /* ── Update total player count ──────────────────────── */
 function updatePillCounts() {
   const EXCLUDE_NAMES = ['ตัวสำรอง', 'ไม่ว่าง/ลา', 'ไม่ว่าง', 'สำรอง'];
+  // only first 10 non-reserve parties
   const mainParties = data.parties.filter(p => {
     if (p.reserve) return false;
     if (EXCLUDE_NAMES.includes((p.name || '').trim())) return false;
     return true;
-  });
+  }).slice(0, 10);
+
+  const classCounts = {};
+  CLASSES.forEach(c => { if (c.id !== 'none') classCounts[c.id] = 0; });
   let total = 0;
   mainParties.forEach(party => {
     party.members.forEach(m => {
-      if (m.name && m.name.trim() !== '') total++;
+      if (m.name && m.name.trim() !== '') {
+        total++;
+        if (m.cls && m.cls !== 'none') classCounts[m.cls] = (classCounts[m.cls] || 0) + 1;
+        else classCounts['_none'] = (classCounts['_none'] || 0) + 1;
+      }
     });
   });
   const el = document.getElementById('total-count');
   if (el) el.textContent = total;
+
+  // render class breakdown
+  let breakdownEl = document.getElementById('class-breakdown');
+  if (!breakdownEl) {
+    breakdownEl = document.createElement('div');
+    breakdownEl.id = 'class-breakdown';
+    breakdownEl.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-left:6px;';
+    const rc = document.getElementById('search-result-count');
+    if (rc && rc.parentNode) rc.parentNode.insertBefore(breakdownEl, rc.nextSibling);
+  }
+  const classBadges = CLASSES.filter(c => c.id !== 'none').map(c => {
+    const cnt = classCounts[c.id] || 0;
+    if (cnt === 0) return '';
+    const colors = {
+      priest: { bg:'#fff0f1', color:'#c0003a', border:'#ffa0a8' },
+      sword:  { bg:'#edfcfb', color:'#1a7a72', border:'#a8f0ea' },
+      spear:  { bg:'#fff0f0', color:'#a00000', border:'#ff4d4d' },
+      lute:   { bg:'#edf4fa', color:'#2a5f7a', border:'#a8d0e8' },
+      numina: { bg:'#f6eeff', color:'#6a2ab5', border:'#d4aaff' },
+      blade:  { bg:'#edfaf4', color:'#2a7a5a', border:'#aaedd8' },
+      fist:   { bg:'#fff5f0', color:'#b84a10', border:'#ffc2a0' },
+    };
+    const s = colors[c.id] || { bg:'#f3f0f7', color:'#555', border:'#d1c4e9' };
+    return `<span style="font-family:'Kanit',sans-serif;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:20px;background:${s.bg};color:${s.color};border:1.5px solid ${s.border};white-space:nowrap;">${c.label} ${cnt}</span>`;
+  }).join('');
+  breakdownEl.innerHTML = classBadges;
 }
 
 function renderCard(party, pi, color, isReserve, num) {
@@ -1124,6 +1164,123 @@ function parseCsvRow(row) {
   return result.map(s => s.replace(/^"|"$/g,''));
 }
 
+/* ── Summary Tab ────────────────────────────────────── */
+function renderSummary() {
+  const ROUND_DATA = [dataR1, dataR2, dataR3];
+  const ROUND_LABELS = ['รอบแรก', 'รอบสอง', 'รอบซ้อม'];
+  const EXCLUDE_NAMES = ['ตัวสำรอง', 'ไม่ว่าง/ลา', 'ไม่ว่าง', 'สำรอง'];
+
+  const playerMap = new Map();
+  ROUND_DATA.forEach((roundData, ri) => {
+    if (!roundData || !roundData.parties) return;
+    const mainParties = roundData.parties.filter(p => {
+      if (p.reserve) return false;
+      if (EXCLUDE_NAMES.includes((p.name || '').trim())) return false;
+      return true;
+    }).slice(0, 10);
+    mainParties.forEach(party => {
+      party.members.forEach(m => {
+        if (!m.name || !m.name.trim()) return;
+        const key = m.name.trim().toLowerCase();
+        if (!playerMap.has(key)) {
+          playerMap.set(key, { name: m.name.trim(), cls: m.cls || 'none', rounds: [] });
+        }
+        const entry = playerMap.get(key);
+        if (!entry.rounds.includes(ri)) entry.rounds.push(ri);
+        if (m.cls && m.cls !== 'none') entry.cls = m.cls;
+      });
+    });
+  });
+
+  const groups = {};
+  CLASSES.forEach(c => { groups[c.id] = []; });
+  playerMap.forEach(entry => {
+    const cls = entry.cls || 'none';
+    if (!groups[cls]) groups[cls] = [];
+    groups[cls].push(entry);
+  });
+  Object.keys(groups).forEach(cls => {
+    groups[cls].sort((a, b) => a.name.localeCompare(b.name, 'th'));
+  });
+
+  const totalUnique = playerMap.size;
+
+  const colors = {
+    priest: { bg:'#fff0f1', color:'#c0003a', border:'var(--priest-border)' },
+    sword:  { bg:'#edfcfb', color:'#1a7a72', border:'var(--sword-border)' },
+    spear:  { bg:'#fff0f0', color:'#a00000', border:'var(--spear-border)' },
+    lute:   { bg:'#edf4fa', color:'#2a5f7a', border:'var(--lute-border)' },
+    numina: { bg:'#f6eeff', color:'#6a2ab5', border:'var(--numina-border)' },
+    blade:  { bg:'#edfaf4', color:'#2a7a5a', border:'var(--blade-border)' },
+    fist:   { bg:'#fff5f0', color:'#b84a10', border:'var(--fist-border)' },
+    none:   { bg:'#f3f0f7', color:'#777',    border:'var(--none-border)' },
+  };
+  const solidBorder = {
+    priest:'#ffa0a8', sword:'#a8f0ea', spear:'#ff4d4d', lute:'#a8d0e8',
+    numina:'#d4aaff', blade:'#aaedd8', fist:'#ffc2a0',  none:'#d1c4e9',
+  };
+
+  const roundBadge = (ri) => {
+    const styles = [
+      'background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;',
+      'background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;',
+      'background:#fff3e0;color:#e65100;border:1px solid #ffcc80;',
+    ];
+    const labels = ['แรก','สอง','ซ้อม'];
+    return `<span style="font-family:'Kanit',sans-serif;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:10px;${styles[ri]}">${labels[ri]}</span>`;
+  };
+
+  // summary counts bar
+  const classCountHtml = CLASSES.filter(c => c.id !== 'none').map(c => {
+    const cnt = (groups[c.id] || []).length;
+    if (!cnt) return '';
+    const s = solidBorder[c.id];
+    const col = colors[c.id];
+    return `<span style="font-family:'Kanit',sans-serif;font-size:.78rem;font-weight:700;padding:4px 12px;border-radius:20px;background:${col.bg};color:${col.color};border:1.5px solid ${s};">${c.label} <b>${cnt}</b></span>`;
+  }).join('') + ((groups['none']||[]).length ? `<span style="font-family:'Kanit',sans-serif;font-size:.78rem;font-weight:700;padding:4px 12px;border-radius:20px;background:#f3f0f7;color:#777;border:1.5px solid #d1c4e9;">ไม่ระบุ <b>${groups['none'].length}</b></span>` : '');
+
+  let gridCards = '';
+  CLASSES.forEach(c => {
+    const members = groups[c.id] || [];
+    if (!members.length) return;
+    const s = solidBorder[c.id];
+    const col = colors[c.id];
+    gridCards += `
+    <div style="background:var(--surface);border-radius:14px;border:1.5px solid ${s};overflow:hidden;box-shadow:0 2px 10px rgba(100,80,150,.08);">
+      <div style="background:${col.bg};padding:10px 14px;border-bottom:1.5px solid ${s};display:flex;align-items:center;gap:8px;">
+        ${c.icon ? `<img src="${c.icon}" style="width:22px;height:22px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));" alt="" draggable="false">` : ''}
+        <span style="font-family:'Kanit',sans-serif;font-size:.95rem;font-weight:800;color:${col.color};">${c.label}</span>
+        <span style="font-family:'Kanit',sans-serif;font-size:.75rem;font-weight:700;margin-left:auto;background:${col.color};color:#fff;padding:2px 10px;border-radius:20px;">${members.length} คน</span>
+      </div>
+      <div style="padding:8px 10px;max-height:300px;overflow-y:auto;">
+        ${members.map((m, i) => `
+          <div style="display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:8px;margin-bottom:3px;${i%2===0?'':'background:'+col.bg+'55'}">
+            <span style="font-family:'Kanit',sans-serif;font-size:.65rem;color:var(--muted);width:18px;text-align:right;flex-shrink:0;">${i+1}.</span>
+            <span style="font-family:'Sarabun','Kanit',sans-serif;font-size:.88rem;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.name)}</span>
+            <div style="display:flex;gap:2px;flex-shrink:0;">${m.rounds.map(ri => roundBadge(ri)).join('')}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('app').innerHTML = `
+    <div style="margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="font-family:'Kanit',sans-serif;font-size:1.3rem;font-weight:800;color:var(--text);">📊 สรุปผู้เล่นทั้งหมด</div>
+        <div style="font-family:'Kanit',sans-serif;font-size:.82rem;color:var(--muted);">รวมจาก รอบแรก + รอบสอง + รอบซ้อมที่ 1 (ชื่อซ้ำนับแค่ครั้งเดียว)</div>
+        <div style="font-family:'Kanit',sans-serif;font-size:.95rem;font-weight:700;color:#7c5cbf;background:rgba(179,157,219,.15);padding:5px 16px;border-radius:20px;border:1.5px solid var(--accent);">
+          👥 รวม <span style="font-size:1.15rem;font-weight:800;">${totalUnique}</span> คน
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;">${classCountHtml}</div>
+      <div id="summary-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">${gridCards}</div>
+    </div>
+    <style>
+      @media(max-width:1100px){#summary-grid{grid-template-columns:repeat(2,1fr)!important;}}
+      @media(max-width:600px){#summary-grid{grid-template-columns:1fr!important;}}
+    </style>`;
+}
+
 function toggleTheme() {
   const isDark = document.body.classList.toggle('dark-mode');
   document.getElementById('theme-toggle-btn').textContent = isDark ? '🌙' : '☀️';
@@ -1184,8 +1341,9 @@ async function loadFromSupabase() {
   if (res4.data && res4.data.data && res4.data.data.parties) dataR4 = normalizeData(res4.data.data);
   if (res5.data && res5.data.data && res5.data.data.parties) dataR5 = normalizeData(res5.data.data);
 
-  data = getRoundData(currentRound);
-  render();
+  data = getRoundData(currentRound === 0 ? 1 : currentRound);
+  if (currentRound === 0) renderSummary();
+  else render();
 }
 
 /* ===== SAVE ไป Supabase ===== */
