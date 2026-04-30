@@ -457,9 +457,43 @@
     color: #00838f;
     cursor: pointer;
     transition: all .2s;
-    margin-left: auto;
   }
   .copy-round-btn:hover { background: #b2ebf2; border-color: #00838f; }
+
+  .copy-round-wrap {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+  .copy-source-select {
+    font-family: 'Kanit', sans-serif;
+    font-size: .78rem;
+    font-weight: 700;
+    border: 2px dashed #80deea;
+    border-radius: 30px;
+    padding: 7px 28px 7px 12px;
+    background: #e0f7fa;
+    color: #00838f;
+    cursor: pointer;
+    outline: none;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%2300838f'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-color: #e0f7fa;
+    transition: all .2s;
+    letter-spacing: .03em;
+  }
+  .copy-source-select:hover { background-color: #b2ebf2; border-color: #00838f; }
+
+  body.dark-mode .copy-round-wrap .copy-source-select {
+    background-color: #0d2a2e;
+    color: #00e5d6;
+    border-color: #00838f;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%2300e5d6'/%3E%3C/svg%3E");
+  }
+  body.dark-mode .copy-round-wrap .copy-source-select:hover { background-color: #103a3e; }
 
   /* ── Search & Filter Bar ──────────────────────────── */
   .search-bar {
@@ -629,7 +663,12 @@
   <button class="tab-btn" style="border-color:#81c784; color:#2e7d32; background:#f1f8e9;" onclick="triggerCsvImport()">📥 Import CSV</button>
   <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCsvImport(event)">
   <button class="tab-btn" style="border-color:#ffb74d; color:#e65100; background:#fff8f0;" onclick="downloadJpg()">🖼 ดาวน์โหลด JPG</button>
-  <button class="copy-round-btn" id="copy-btn" style="display:none" onclick="copyRound1()">📋 คัดลอกจากรอบแรก</button>
+  <div class="copy-round-wrap" id="copy-wrap">
+    <select class="copy-source-select" id="copy-source-select">
+      <option value="">📋 คัดลอกจาก...</option>
+    </select>
+    <button class="copy-round-btn" onclick="copyFromSelected()">คัดลอก</button>
+  </div>
   <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="สลับโหมดสว่าง/มืด">☀️</button>
 </div>
 <div id="app"></div>
@@ -732,7 +771,20 @@ function switchRound(r) {
   });
   const sumBtn = document.getElementById('tab-summary');
   if (sumBtn) sumBtn.classList.toggle('active', r === 0);
-  document.getElementById('copy-btn').style.display = r === 2 ? 'inline-block' : 'none';
+  document.getElementById('copy-wrap').style.display = (r !== 0) ? 'flex' : 'none';
+  if (r !== 0) {
+    const roundNames = {1:'⚔️ รอบแรก', 2:'🏆 รอบสอง', 3:'🥊 รอบซ้อมที่ 1', 4:'🥊 รอบซ้อมที่ 2', 5:'🥊 รอบซ้อมที่ 3'};
+    const sel = document.getElementById('copy-source-select');
+    sel.innerHTML = '<option value="">📋 คัดลอกจาก...</option>';
+    [1,2,3,4,5].forEach(n => {
+      if (n !== r) {
+        const opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = roundNames[n];
+        sel.appendChild(opt);
+      }
+    });
+  }
   // hide/show search bar
   document.getElementById('search-bar').style.display = r === 0 ? 'none' : '';
   clearSearch();
@@ -741,13 +793,26 @@ function switchRound(r) {
   else render();
 }
 
-function copyRound1() {
-  if (!confirm('คัดลอกข้อมูลรอบแรกมาทับรอบสอง? ข้อมูลรอบสองจะหายไป')) return;
-  dataR2 = JSON.parse(JSON.stringify(dataR1));
-  data = dataR2;
+function copyFromSelected() {
+  const sel = document.getElementById('copy-source-select');
+  const srcRound = parseInt(sel.value);
+  if (!srcRound) {
+    alert('กรุณาเลือก tab ที่ต้องการคัดลอก');
+    return;
+  }
+  const roundNames = {1:'รอบแรก', 2:'รอบสอง', 3:'รอบซ้อมที่ 1', 4:'รอบซ้อมที่ 2', 5:'รอบซ้อมที่ 3'};
+  const destName = roundNames[currentRound];
+  const srcName  = roundNames[srcRound];
+  if (!confirm(`คัดลอกข้อมูล${srcName}มาทับ${destName}?\nข้อมูล${destName}จะหายไป`)) return;
+  const copied = JSON.parse(JSON.stringify(getRoundData(srcRound)));
+  if (currentRound === 1) { dataR1 = copied; data = dataR1; }
+  else if (currentRound === 2) { dataR2 = copied; data = dataR2; }
+  else if (currentRound === 3) { dataR3 = copied; data = dataR3; }
+  else if (currentRound === 4) { dataR4 = copied; data = dataR4; }
+  else if (currentRound === 5) { dataR5 = copied; data = dataR5; }
   render();
   const t = document.getElementById('toast');
-  t.textContent = '📋 คัดลอกรอบแรกมาแล้ว!';
+  t.textContent = `📋 คัดลอก${srcName}มาแล้ว!`;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2200);
 }
@@ -1505,6 +1570,8 @@ document.addEventListener('keydown', e => {
 
 /* ===== INIT ===== */
 render();
+// init copy wrap for round 1
+switchRound(1);
 showLoginModal(); // แสดง login modal ก่อนเลย
 </script>
 
