@@ -1166,6 +1166,8 @@ function parseCsvRow(row) {
 
 /* ── Summary Tab ────────────────────────────────────── */
 function renderSummary() {
+  const ALL_ROUND_DATA = [dataR1, dataR2, dataR3, dataR4, dataR5];
+  const ALL_ROUND_LABELS = ['รอบแรก', 'รอบสอง', 'ซ้อม1', 'ซ้อม2', 'ซ้อม3'];
   const ROUND_DATA = [dataR1, dataR2, dataR3];
   const ROUND_LABELS = ['รอบแรก', 'รอบสอง', 'รอบซ้อม'];
   const EXCLUDE_NAMES = ['ตัวสำรอง', 'ไม่ว่าง/ลา', 'ไม่ว่าง', 'สำรอง'];
@@ -1190,6 +1192,20 @@ function renderSummary() {
         if (m.cls && m.cls !== 'none') entry.cls = m.cls;
       });
     });
+  });
+
+  // Collect reserve & absent members per round (all 5 rounds)
+  const reserveByRound = []; // [{ri, label, members:[{name,cls}]}]
+  const absentByRound  = [];
+  ALL_ROUND_DATA.forEach((roundData, ri) => {
+    if (!roundData || !roundData.parties) return;
+    const rLabel = ALL_ROUND_LABELS[ri];
+    const reserveParty = roundData.parties.find(p => p.reserve && (p.name||'').trim() === 'ตัวสำรอง');
+    const absentParty  = roundData.parties.find(p => p.reserve && (p.name||'').trim() === 'ไม่ว่าง/ลา');
+    const resMembers = (reserveParty ? reserveParty.members : []).filter(m => m.name && m.name.trim());
+    const absMembers = (absentParty  ? absentParty.members  : []).filter(m => m.name && m.name.trim());
+    if (resMembers.length) reserveByRound.push({ ri, label: rLabel, members: resMembers });
+    if (absMembers.length) absentByRound.push({ ri, label: rLabel, members: absMembers });
   });
 
   const groups = {};
@@ -1252,16 +1268,56 @@ function renderSummary() {
         <span style="font-family:'Kanit',sans-serif;font-size:.95rem;font-weight:800;color:${col.color};">${c.label}</span>
         <span style="font-family:'Kanit',sans-serif;font-size:.75rem;font-weight:700;margin-left:auto;background:${col.color};color:#fff;padding:2px 10px;border-radius:20px;">${members.length} คน</span>
       </div>
-      <div style="padding:8px 10px;max-height:300px;overflow-y:auto;">
+      <div style="padding:8px 10px;">
         ${members.map((m, i) => `
           <div style="display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:8px;margin-bottom:3px;${i%2===0?'':'background:'+col.bg+'55'}">
             <span style="font-family:'Kanit',sans-serif;font-size:.65rem;color:var(--muted);width:18px;text-align:right;flex-shrink:0;">${i+1}.</span>
-            <span style="font-family:'Sarabun','Kanit',sans-serif;font-size:.88rem;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.name)}</span>
+            <span style="font-family:'Sarabun','Kanit',sans-serif;font-size:.88rem;font-weight:600;color:var(--text);flex:1;min-width:0;word-break:break-all;">${esc(m.name)}</span>
             <div style="display:flex;gap:2px;flex-shrink:0;">${m.rounds.map(ri => roundBadge(ri)).join('')}</div>
           </div>`).join('')}
       </div>
     </div>`;
   });
+
+  // Build reserve section HTML
+  function renderStatusSection(byRound, statusLabel, badgeBg, badgeColor, badgeBorder, icon) {
+    if (!byRound.length) return '';
+    let html = `<div style="margin-top:28px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="font-family:'Kanit',sans-serif;font-size:1.1rem;font-weight:800;color:var(--text);">${icon} ${statusLabel}</div>
+        <span style="font-family:'Kanit',sans-serif;font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:20px;background:${badgeBg};color:${badgeColor};border:1.5px solid ${badgeBorder};">สถานะ: ${statusLabel}</span>
+      </div>
+      <div id="status-grid-${statusLabel}" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">`;
+    byRound.forEach(({ label, members }) => {
+      html += `<div style="background:var(--surface);border-radius:12px;border:1.5px solid ${badgeBorder};overflow:hidden;">
+        <div style="background:${badgeBg};padding:8px 12px;border-bottom:1.5px solid ${badgeBorder};display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'Kanit',sans-serif;font-size:.85rem;font-weight:800;color:${badgeColor};">${label}</span>
+          <span style="font-family:'Kanit',sans-serif;font-size:.7rem;font-weight:700;margin-left:auto;background:${badgeColor};color:#fff;padding:1px 8px;border-radius:20px;">${members.length} คน</span>
+        </div>
+        <div style="padding:6px 8px;">
+          ${members.map((m, i) => {
+            const cls = CLASS_MAP[m.cls] || CLASS_MAP['none'];
+            return `<div style="display:flex;align-items:center;gap:4px;padding:3px 5px;border-radius:7px;margin-bottom:2px;${i%2===0?'':'background:'+badgeBg+'44'}">
+              <span style="font-family:'Kanit',sans-serif;font-size:.6rem;color:var(--muted);width:16px;text-align:right;flex-shrink:0;">${i+1}.</span>
+              ${cls.icon ? `<img src="${cls.icon}" style="width:14px;height:14px;object-fit:contain;flex-shrink:0;" alt="" draggable="false">` : ''}
+              <span style="font-family:'Sarabun','Kanit',sans-serif;font-size:.82rem;font-weight:600;color:var(--text);flex:1;min-width:0;word-break:break-all;">${esc(m.name)}</span>
+              <span style="font-family:'Kanit',sans-serif;font-size:.58rem;font-weight:700;padding:1px 6px;border-radius:10px;background:${badgeBg};color:${badgeColor};border:1px solid ${badgeBorder};white-space:nowrap;flex-shrink:0;">${statusLabel}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    });
+    html += `</div></div>
+    <style>
+      @media(max-width:1100px){#status-grid-${statusLabel}{grid-template-columns:repeat(3,1fr)!important;}}
+      @media(max-width:700px){#status-grid-${statusLabel}{grid-template-columns:repeat(2,1fr)!important;}}
+      @media(max-width:450px){#status-grid-${statusLabel}{grid-template-columns:1fr!important;}}
+    </style>`;
+    return html;
+  }
+
+  const reserveSection = renderStatusSection(reserveByRound, 'สำรอง',   '#fff8f0', '#c2620a', '#f0b97a', '🛡');
+  const absentSection  = renderStatusSection(absentByRound,  'ไม่ว่าง/ลา', '#fff0f0', '#b71c1c', '#ef9a9a', '🚫');
 
   document.getElementById('app').innerHTML = `
     <div style="margin-bottom:24px;">
@@ -1274,6 +1330,8 @@ function renderSummary() {
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;">${classCountHtml}</div>
       <div id="summary-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">${gridCards}</div>
+      ${reserveSection}
+      ${absentSection}
     </div>
     <style>
       @media(max-width:1100px){#summary-grid{grid-template-columns:repeat(2,1fr)!important;}}
@@ -1476,7 +1534,8 @@ async function downloadJpg() {
       logging: false,
     });
     const link = document.createElement('a');
-    link.download = `party-${currentRound === 1 ? 'r1' : 'r2'}.jpg`;
+    const rNames = {0:'summary',1:'r1',2:'r2',3:'r3',4:'r4',5:'r5'};
+    link.download = `party-${rNames[currentRound]||currentRound}.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 0.92);
     link.click();
   } catch(e) {
