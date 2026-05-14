@@ -1779,52 +1779,51 @@ async function discordSend() {
   const errEl   = document.getElementById('discord-error');
   errEl.style.display = 'none';
 
-  if (!webhook) {
-    errEl.textContent = '❌ ไม่พบ Webhook URL';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (!webhook.startsWith('https://discord.com/api/webhooks/') && !webhook.startsWith('https://discordapp.com/api/webhooks/')) {
-    errEl.textContent = '❌ Webhook URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://discord.com/api/webhooks/';
-    errEl.style.display = 'block';
-    return;
-  }
+  const guild  = document.getElementById('discord-guild').value.trim();
+  const day    = document.getElementById('discord-day').value;
+  const date   = document.getElementById('discord-date').value.trim();
+  const mode   = discordSelectedMode;
 
   const btn = document.getElementById('discord-send-btn');
-  btn.textContent = '⏳ กำลังส่ง...';
+  btn.textContent = '⏳ กำลังสร้างรูป...';
   btn.disabled = true;
 
-  const content = buildDiscordMessage();
-
   try {
-    // Split message if too long (Discord limit 2000 chars)
-    const chunks = [];
-    let cur = '';
-    for (const line of content.split('\n')) {
-      if ((cur + '\n' + line).length > 1900) {
-        chunks.push(cur);
-        cur = line;
-      } else {
-        cur += (cur ? '\n' : '') + line;
-      }
-    }
-    if (cur) chunks.push(cur);
+    // 1) Capture screenshot
+    const el = document.getElementById('app');
+    const canvas = await html2canvas(el, {
+      backgroundColor: document.body.classList.contains('dark-mode') ? '#0f0d17' : '#f5f0f8',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
 
-    for (const chunk of chunks) {
-      const res = await fetch(webhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: chunk }),
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`HTTP ${res.status}: ${body}`);
-      }
+    // Convert canvas to blob
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.92));
+
+    // 2) Build short caption
+    const modeEmoji = mode === 'ซ้อม' ? '🥊' : '🏆';
+    const roundNames = {0:'สรุปทุกรอบ',1:'รอบแรก',2:'รอบสอง',3:'รอบซ้อมที่ 1',4:'รอบซ้อมที่ 2',5:'รอบซ้อมที่ 3'};
+    const roundName = roundNames[currentRound] || `รอบ ${currentRound}`;
+
+    let caption = `${modeEmoji} **${mode}** | 📅 วัน${day} ${date} | 📋 ${roundName}`;
+    if (guild) caption += `\n⚔️ vs **${guild}**`;
+
+    // 3) Send multipart to Discord (image + message)
+    const form = new FormData();
+    form.append('file', blob, `party-${roundName}.jpg`);
+    form.append('payload_json', JSON.stringify({ content: caption }));
+
+    btn.textContent = '⏳ กำลังส่ง...';
+    const res = await fetch(webhook, { method: 'POST', body: form });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`HTTP ${res.status}: ${body}`);
     }
 
     document.getElementById('discord-modal').style.display = 'none';
     const t = document.getElementById('toast');
-    t.textContent = '✅ ส่งข้อมูลไป Discord แล้ว!';
+    t.textContent = '✅ ส่งรูปไป Discord แล้ว!';
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'), 2800);
   } catch(e) {
