@@ -83,16 +83,22 @@
 
   /* Dark modal */
   body.dark-mode #login-modal > div,
-  body.dark-mode #pin-modal > div {
+  body.dark-mode #pin-modal > div,
+  body.dark-mode #discord-modal > div {
     background: #1a1628 !important;
     border-color: #2e2847 !important;
   }
   body.dark-mode #login-modal input,
-  body.dark-mode #pin-modal input {
+  body.dark-mode #pin-modal input,
+  body.dark-mode #discord-modal input,
+  body.dark-mode #discord-modal select,
+  body.dark-mode #discord-modal textarea {
     background: #0f0d17 !important;
     color: #e8e0f8 !important;
     border-color: #2e2847 !important;
   }
+  body.dark-mode #discord-modal label { color: #b0a8d0 !important; }
+  body.dark-mode #discord-modal .discord-section-title { color: #e8e0f8 !important; }
   body.dark-mode #login-modal div[style*="color:#3d3450"],
   body.dark-mode #pin-modal div[style*="color:#3d3450"] {
     color: #e8e0f8 !important;
@@ -663,6 +669,7 @@
   <button class="tab-btn" style="border-color:#81c784; color:#2e7d32; background:#f1f8e9;" onclick="triggerCsvImport()">📥 Import CSV</button>
   <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCsvImport(event)">
   <button class="tab-btn" style="border-color:#ffb74d; color:#e65100; background:#fff8f0;" onclick="downloadJpg()">🖼 ดาวน์โหลด JPG</button>
+  <button class="tab-btn" style="border-color:#5865F2; color:#5865F2; background:#f0f1ff;" onclick="showDiscordModal()">📤 ส่ง Discord</button>
   <div class="copy-round-wrap" id="copy-wrap">
     <select class="copy-source-select" id="copy-source-select">
       <option value="">📋 คัดลอกจาก...</option>
@@ -1604,6 +1611,238 @@ showLoginModal(); // แสดง login modal ก่อนเลย
     </div>
   </div>
 </div>
+<!-- ===== Discord Modal ===== -->
+<div id="discord-modal" style="display:none; position:fixed; inset:0; background:rgba(80,60,120,.5); backdrop-filter:blur(6px); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:24px; padding:32px 32px 24px; box-shadow:0 12px 50px rgba(88,101,242,.2); min-width:340px; max-width:440px; width:90%; text-align:left; border:1px solid #ddd5ea; position:relative;">
+    <div style="text-align:center; margin-bottom:20px;">
+      <div style="font-size:2rem; margin-bottom:6px;">📤</div>
+      <div style="font-family:'Kanit',sans-serif; font-size:1.15rem; font-weight:800; color:#3d3450; margin-bottom:3px;">ส่งข้อมูลไป Discord</div>
+      <div style="font-family:'Sarabun',sans-serif; font-size:.82rem; color:#9b8fb0;">กรอกรายละเอียดการแข่งขัน</div>
+    </div>
+
+    <input id="discord-webhook" type="hidden" value="https://discord.com/api/webhooks/1504446444629786816/FgfLz50uhgRh5RXwci9mK9cPlj8aTmKUGuH38G8gopuSKFjjjA0YoDBUY3flWfeq-91-"/>
+
+    <!-- Guild name -->
+    <label style="display:block; font-family:'Kanit',sans-serif; font-size:.8rem; font-weight:700; color:#7c5cbf; margin-bottom:4px; letter-spacing:.04em;">⚔️ ชื่อกิลที่จะเจอ</label>
+    <input id="discord-guild" type="text" placeholder="เช่น GuildName"
+      style="width:100%; padding:9px 13px; border-radius:10px; border:1.5px solid #ddd5ea; font-family:'Kanit',sans-serif; font-size:.88rem; outline:none; color:#3d3450; margin-bottom:14px;"
+      onfocus="this.style.borderColor='#5865F2'" onblur="this.style.borderColor='#ddd5ea'"/>
+
+    <!-- Mode (ซ้อม / แข่ง) -->
+    <label style="display:block; font-family:'Kanit',sans-serif; font-size:.8rem; font-weight:700; color:#7c5cbf; margin-bottom:6px; letter-spacing:.04em;">🎯 ประเภท</label>
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <label style="flex:1; cursor:pointer;">
+        <input type="radio" name="discord-mode" value="ซ้อม" id="mode-practice" checked style="display:none;">
+        <div id="mode-practice-btn" onclick="selectMode('ซ้อม')"
+          style="text-align:center; padding:8px 0; border-radius:10px; border:2px solid #5865F2; background:#f0f1ff; color:#5865F2; font-family:'Kanit',sans-serif; font-size:.88rem; font-weight:700; transition:all .15s;">
+          🥊 ซ้อม
+        </div>
+      </label>
+      <label style="flex:1; cursor:pointer;">
+        <input type="radio" name="discord-mode" value="แข่ง" id="mode-compete" style="display:none;">
+        <div id="mode-compete-btn" onclick="selectMode('แข่ง')"
+          style="text-align:center; padding:8px 0; border-radius:10px; border:2px solid #ddd5ea; background:#f5f0f8; color:#9b8fb0; font-family:'Kanit',sans-serif; font-size:.88rem; font-weight:700; transition:all .15s;">
+          🏆 แข่ง
+        </div>
+      </label>
+    </div>
+
+    <!-- Day + Date -->
+    <div style="display:flex; gap:10px; margin-bottom:20px;">
+      <div style="flex:1;">
+        <label style="display:block; font-family:'Kanit',sans-serif; font-size:.8rem; font-weight:700; color:#7c5cbf; margin-bottom:4px; letter-spacing:.04em;">📅 วัน</label>
+        <select id="discord-day"
+          style="width:100%; padding:9px 13px; border-radius:10px; border:1.5px solid #ddd5ea; font-family:'Kanit',sans-serif; font-size:.88rem; outline:none; color:#3d3450; background:#fff; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%239b8fb0'/%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position:right 10px center;"
+          onfocus="this.style.borderColor='#5865F2'" onblur="this.style.borderColor='#ddd5ea'">
+          <option value="จันทร์">จ — จันทร์</option>
+          <option value="อังคาร">อ — อังคาร</option>
+          <option value="พุธ">พ — พุธ</option>
+          <option value="พฤหัสบดี">พฤ — พฤหัสบดี</option>
+          <option value="ศุกร์">ศ — ศุกร์</option>
+          <option value="เสาร์">ส — เสาร์</option>
+          <option value="อาทิตย์">อา — อาทิตย์</option>
+        </select>
+      </div>
+      <div style="flex:1;">
+        <label style="display:block; font-family:'Kanit',sans-serif; font-size:.8rem; font-weight:700; color:#7c5cbf; margin-bottom:4px; letter-spacing:.04em;">🗓 วันที่</label>
+        <input id="discord-date" type="text" placeholder="เช่น 14/05"
+          style="width:100%; padding:9px 13px; border-radius:10px; border:1.5px solid #ddd5ea; font-family:'Kanit',sans-serif; font-size:.88rem; outline:none; color:#3d3450;"
+          onfocus="this.style.borderColor='#5865F2'" onblur="this.style.borderColor='#ddd5ea'"/>
+      </div>
+    </div>
+
+    <div id="discord-error" style="display:none; color:#e57373; font-family:'Kanit',sans-serif; font-size:.82rem; margin-bottom:10px; text-align:center;"></div>
+
+    <!-- Buttons -->
+    <div style="display:flex; gap:10px;">
+      <button onclick="discordCancel()" style="flex:1; padding:10px; border-radius:12px; border:1.5px solid #ddd5ea; background:#f5f0f8; color:#9b8fb0; font-family:'Kanit',sans-serif; font-size:.9rem; cursor:pointer; font-weight:600;">ยกเลิก</button>
+      <button id="discord-send-btn" onclick="discordSend()" style="flex:2; padding:10px; border-radius:12px; border:none; background:linear-gradient(135deg,#5865F2,#7983f5); color:#fff; font-family:'Kanit',sans-serif; font-size:.9rem; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(88,101,242,.35);">📤 ส่งไป Discord</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let discordSelectedMode = 'ซ้อม';
+
+function selectMode(mode) {
+  discordSelectedMode = mode;
+  const practiceBtn = document.getElementById('mode-practice-btn');
+  const competeBtn  = document.getElementById('mode-compete-btn');
+  if (mode === 'ซ้อม') {
+    practiceBtn.style.borderColor = '#5865F2';
+    practiceBtn.style.background  = '#f0f1ff';
+    practiceBtn.style.color       = '#5865F2';
+    competeBtn.style.borderColor  = '#ddd5ea';
+    competeBtn.style.background   = '#f5f0f8';
+    competeBtn.style.color        = '#9b8fb0';
+  } else {
+    competeBtn.style.borderColor  = '#5865F2';
+    competeBtn.style.background   = '#f0f1ff';
+    competeBtn.style.color        = '#5865F2';
+    practiceBtn.style.borderColor = '#ddd5ea';
+    practiceBtn.style.background  = '#f5f0f8';
+    practiceBtn.style.color       = '#9b8fb0';
+  }
+}
+
+function showDiscordModal() {
+  // Pre-fill today's date
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('discord-date').value = `${dd}/${mm}`;
+  // Pre-select today's day
+  const dayMap = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  const todayDay = dayMap[now.getDay()];
+  const sel = document.getElementById('discord-day');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === todayDay) { sel.selectedIndex = i; break; }
+  }
+  document.getElementById('discord-error').style.display = 'none';
+  document.getElementById('discord-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('discord-webhook').focus(), 100);
+}
+
+function discordCancel() {
+  document.getElementById('discord-modal').style.display = 'none';
+}
+
+function buildDiscordMessage() {
+  const guild   = document.getElementById('discord-guild').value.trim();
+  const day     = document.getElementById('discord-day').value;
+  const date    = document.getElementById('discord-date').value.trim();
+  const mode    = discordSelectedMode;
+  const roundNames = {0:'สรุปทุกรอบ', 1:'รอบแรก', 2:'รอบสอง', 3:'รอบซ้อมที่ 1', 4:'รอบซ้อมที่ 2', 5:'รอบซ้อมที่ 3'};
+  const roundName = roundNames[currentRound] || `รอบ ${currentRound}`;
+
+  const modeEmoji = mode === 'ซ้อม' ? '🥊' : '🏆';
+  const dayEmoji  = '📅';
+
+  let msg = `${modeEmoji} **${mode}** | ${dayEmoji} วัน${day} ${date}\n`;
+  if (guild) msg += `⚔️ **vs ${guild}**\n`;
+  msg += `📋 **${roundName}**\n`;
+  msg += `${'─'.repeat(30)}\n`;
+
+  const parties = currentRound === 0
+    ? [...dataR1.parties,...dataR2.parties,...dataR3.parties,...dataR4.parties,...dataR5.parties]
+    : data.parties;
+
+  parties.filter(p => !p.reserve).forEach((party, idx) => {
+    const filled = party.members.filter(m => m.name && m.name.trim() !== '');
+    if (filled.length === 0) return;
+    msg += `\n**${party.name}** (${filled.length} คน)\n`;
+    filled.forEach(m => {
+      const cls = CLASS_MAP[m.cls] || CLASS_MAP['none'];
+      const label = cls.id !== 'none' ? `[${cls.label}]` : '';
+      msg += `• ${m.name}${label ? ' ' + label : ''}\n`;
+    });
+  });
+
+  // reserves
+  const reserves = (currentRound === 0 ? dataR1.parties : data.parties).filter(p => p.reserve);
+  reserves.forEach(party => {
+    const filled = party.members.filter(m => m.name && m.name.trim() !== '');
+    if (filled.length === 0) return;
+    msg += `\n**${party.name}**\n`;
+    filled.forEach(m => {
+      const cls = CLASS_MAP[m.cls] || CLASS_MAP['none'];
+      const label = cls.id !== 'none' ? ` [${cls.label}]` : '';
+      msg += `• ${m.name}${label}\n`;
+    });
+  });
+
+  return msg;
+}
+
+async function discordSend() {
+  const webhook = document.getElementById('discord-webhook').value.trim();
+  const errEl   = document.getElementById('discord-error');
+  errEl.style.display = 'none';
+
+  if (!webhook) {
+    errEl.textContent = '❌ ไม่พบ Webhook URL';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!webhook.startsWith('https://discord.com/api/webhooks/') && !webhook.startsWith('https://discordapp.com/api/webhooks/')) {
+    errEl.textContent = '❌ Webhook URL ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://discord.com/api/webhooks/';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('discord-send-btn');
+  btn.textContent = '⏳ กำลังส่ง...';
+  btn.disabled = true;
+
+  const content = buildDiscordMessage();
+
+  try {
+    // Split message if too long (Discord limit 2000 chars)
+    const chunks = [];
+    let cur = '';
+    for (const line of content.split('\n')) {
+      if ((cur + '\n' + line).length > 1900) {
+        chunks.push(cur);
+        cur = line;
+      } else {
+        cur += (cur ? '\n' : '') + line;
+      }
+    }
+    if (cur) chunks.push(cur);
+
+    for (const chunk of chunks) {
+      const res = await fetch(webhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: chunk }),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`HTTP ${res.status}: ${body}`);
+      }
+    }
+
+    document.getElementById('discord-modal').style.display = 'none';
+    const t = document.getElementById('toast');
+    t.textContent = '✅ ส่งข้อมูลไป Discord แล้ว!';
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2800);
+  } catch(e) {
+    errEl.textContent = '❌ ส่งไม่สำเร็จ: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = '📤 ส่งไป Discord';
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('discord-modal').style.display === 'flex') {
+    if (e.key === 'Escape') discordCancel();
+  }
+});
+</script>
+
 <!-- html2canvas for JPG export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
