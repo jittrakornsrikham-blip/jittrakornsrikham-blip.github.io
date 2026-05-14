@@ -1803,15 +1803,13 @@ async function discordSend() {
 
     // 2) Build short caption
     const modeEmoji = mode === 'ซ้อม' ? '🥊' : '🏆';
-    const roundNames = {0:'สรุปทุกรอบ',1:'รอบแรก',2:'รอบสอง',3:'รอบซ้อมที่ 1',4:'รอบซ้อมที่ 2',5:'รอบซ้อมที่ 3'};
-    const roundName = roundNames[currentRound] || `รอบ ${currentRound}`;
 
-    let caption = `${modeEmoji} **${mode}** | 📅 วัน${day} ${date} | 📋 ${roundName}`;
+    let caption = `${modeEmoji} **${mode}** | 📅 วัน${day} ${date}`;
     if (guild) caption += `\n⚔️ vs **${guild}**`;
 
     // 3) Send multipart to Discord (image + message)
     const form = new FormData();
-    form.append('file', blob, `party-${roundName}.jpg`);
+    form.append('file', blob, `party-r${currentRound}.jpg`);
     form.append('payload_json', JSON.stringify({ content: caption }));
 
     btn.textContent = '⏳ กำลังส่ง...';
