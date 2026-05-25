@@ -397,7 +397,15 @@
   }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-  /* ── Color-bar top of each card ───────────────────── */
+  /* ── Group border colors ──────────────────────────── */
+  .party-card.group-blue  { border-color: #6ab0f5; box-shadow: 0 2px 12px rgba(106,176,245,.15); }
+  .party-card.group-orange{ border-color: #ffb347; box-shadow: 0 2px 12px rgba(255,179,71,.15); }
+  .party-card.group-green { border-color: #69d98f; box-shadow: 0 2px 12px rgba(105,217,143,.15); }
+  body.dark-mode .party-card.group-blue  { border-color: #4a90d9; }
+  body.dark-mode .party-card.group-orange{ border-color: #e6921a; }
+  body.dark-mode .party-card.group-green { border-color: #2eb860; }
+
+
   .party-color-bar { height: 4px; width:100%; }
 
   /* ── Move-to select (reserve only) ───────────────── */
@@ -683,7 +691,8 @@
 <div class="toast" id="toast">✅ บันทึกแล้ว!</div>
 
 <script>
-const PARTY_COLORS = ['#b39ddb','#f48fb1','#80cbc4','#ffe082','#80deea','#ef9a9a','#a5d6a7','#ffab91'];
+// กลุ่ม 1=ปาร์ตี้ 1-4,8 (idx 0-3,7) | กลุ่ม 2=ปาร์ตี้ 5-7 (idx 4-6) | กลุ่ม 3=ปาร์ตี้ 9-10 (idx 8-9)
+const PARTY_COLORS = ['#6ab0f5','#6ab0f5','#6ab0f5','#6ab0f5','#ffb347','#ffb347','#ffb347','#6ab0f5','#69d98f','#69d98f'];
 
 const CLASSES = [
   { id:'none',   label:'— คลาส —',     css:'cls-none',   chip:'chip-none',   icon:'' },
@@ -838,7 +847,7 @@ function render() {
   html += `<div class="parties-grid">`;
   main.forEach((party, idx) => {
     const pi = data.parties.indexOf(party);
-    html += renderCard(party, pi, PARTY_COLORS[idx % PARTY_COLORS.length], false, idx + 1);
+    html += renderCard(party, pi, PARTY_COLORS[idx] || PARTY_COLORS[PARTY_COLORS.length-1], false, idx + 1);
   });
   reserve.forEach((party, ridx) => {
     const pi = data.parties.indexOf(party);
@@ -904,9 +913,17 @@ function updatePillCounts() {
   breakdownEl.innerHTML = classBadges;
 }
 
+function getGroupClass(color) {
+  if (color === '#6ab0f5') return 'group-blue';
+  if (color === '#ffb347') return 'group-orange';
+  if (color === '#69d98f') return 'group-green';
+  return '';
+}
+
 function renderCard(party, pi, color, isReserve, num) {
+  const groupCls = isReserve ? '' : (' ' + getGroupClass(color));
   return `
-  <div class="party-card${isReserve ? ' reserve-card' : ''}" id="card-${pi}"
+  <div class="party-card${isReserve ? ' reserve-card' : ''}${groupCls}" id="card-${pi}"
     ondragover="cardDragOver(event,${pi})"
     ondragleave="cardDragLeave(event,${pi})"
     ondrop="cardDrop(event,${pi})"
