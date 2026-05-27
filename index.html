@@ -2092,48 +2092,98 @@ async function downloadJpgFromModal() {
   btn.textContent = '⏳ กำลังสร้าง...';
   btn.disabled = true;
 
+  // ซ่อน modal ก่อน capture
+  document.getElementById('jpg-modal').style.display = 'none';
+
+  // รอ 1 frame ให้ browser repaint
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
   try {
     const isDark = document.body.classList.contains('dark-mode');
     const bgColor = isDark ? '#0f0d17' : '#f5f0f8';
 
-    // 1) Capture the app (ไม่มี header ด้านบน)
-    const el = document.getElementById('app');
-    const appCanvas = await html2canvas(el, {
+    // 1) Capture ทั้งหน้า (document.body) รวม tab bar + cards ทั้งหมด
+    const pageCanvas = await html2canvas(document.body, {
       backgroundColor: bgColor,
-      scale: 2.5,
+      scale: 2,
       useCORS: true,
       logging: false,
       letterRendering: true,
-      foreignObjectRendering: true,
       scrollX: 0,
-      scrollY: -window.scrollY,
+      scrollY: 0,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+      width: document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight,
     });
 
-    // ใช้ canvas ตรง ๆ เพื่อลดปัญหาชื่อโดนตัด/แหว่ง
+    // 2) สร้าง header banner
+    const scale = pageCanvas.width / Math.max(document.documentElement.scrollWidth * 2, 1);
+    const headerH = Math.round(90 * scale);
     const finalCanvas = document.createElement('canvas');
-    finalCanvas.width  = appCanvas.width;
-    finalCanvas.height = appCanvas.height;
+    finalCanvas.width  = pageCanvas.width;
+    finalCanvas.height = pageCanvas.height + headerH;
 
     const ctx = finalCanvas.getContext('2d');
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-    ctx.drawImage(appCanvas, 0, 0);
 
-    // Download
+    // พื้นหลัง header แบบ gradient
+    const grad = ctx.createLinearGradient(0, 0, finalCanvas.width, 0);
+    if (mode === 'แข่ง') {
+      grad.addColorStop(0, '#1a0a2e');
+      grad.addColorStop(0.5, '#7c2d82');
+      grad.addColorStop(1, '#1a0a2e');
+    } else {
+      grad.addColorStop(0, '#0a1a2e');
+      grad.addColorStop(0.5, '#1a4a6e');
+      grad.addColorStop(1, '#0a1a2e');
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, finalCanvas.width, headerH);
+
+    // เส้นขีดด้านล่าง header
+    ctx.fillStyle = mode === 'แข่ง' ? 'rgba(200,100,255,0.4)' : 'rgba(100,200,255,0.4)';
+    ctx.fillRect(0, headerH - 3, finalCanvas.width, 3);
+
+    // ข้อความ header
+    ctx.textAlign = 'center';
+    const modeEmoji = mode === 'ซ้อม' ? '🥊' : '🏆';
+    const fs1 = Math.round(26 * scale);
+    const fs2 = Math.round(19 * scale);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${fs1}px 'Kanit', 'Sarabun', sans-serif`;
+    const line1 = guild
+      ? `${modeEmoji} ${mode} | 📅 วัน${day} ${date}  ⚔️ vs ${guild}`
+      : `${modeEmoji} ${mode} | 📅 วัน${day} ${date}`;
+    ctx.fillText(line1, finalCanvas.width / 2, headerH * 0.58);
+
+    // round label เล็ก ๆ
+    const roundLabels = {1:'⚔️ รอบแรก', 2:'🏆 รอบสอง', 3:'🥊 รอบซ้อมที่ 1', 4:'🥊 รอบซ้อมที่ 2', 5:'🥊 รอบซ้อมที่ 3', 0:'📊 สรุป'};
+    ctx.fillStyle = mode === 'แข่ง' ? '#e0b0ff' : '#80d8ff';
+    ctx.font = `${fs2}px 'Kanit', 'Sarabun', sans-serif`;
+    ctx.fillText(roundLabels[currentRound] || '', finalCanvas.width / 2, headerH * 0.88);
+
+    // วาด page canvas ด้านล่าง header
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, headerH, finalCanvas.width, pageCanvas.height);
+    ctx.drawImage(pageCanvas, 0, headerH);
+
+    // 3) Download
     const link = document.createElement('a');
     const rNames = {0:'summary',1:'r1',2:'r2',3:'r3',4:'r4',5:'r5'};
     const modeStr = mode === 'แข่ง' ? 'compete' : 'practice';
-    link.download = `party-${rNames[currentRound]||currentRound}-${modeStr}-${date.replace('/','')}.jpg`;
+    const guildStr = guild ? `-${guild.replace(/\s+/g,'')}` : '';
+    link.download = `party-${rNames[currentRound]||currentRound}-${modeStr}${guildStr}-${date.replace('/','')}.jpg`;
     link.href = finalCanvas.toDataURL('image/jpeg', 0.92);
     link.click();
 
-    document.getElementById('jpg-modal').style.display = 'none';
     const t = document.getElementById('toast');
     t.textContent = '✅ ดาวน์โหลด JPG แล้ว!';
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'), 2800);
   } catch(e) {
     alert('❌ ดาวน์โหลดไม่สำเร็จ: ' + e.message);
+    document.getElementById('jpg-modal').style.display = 'flex';
   } finally {
     btn.textContent = '🖼 ดาวน์โหลด JPG';
     btn.disabled = false;
