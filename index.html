@@ -244,14 +244,14 @@
   }
 
   /* ── Members List ─────────────────────────────────── */
-  .members-list { padding: 5px 5px 8px; min-height: 30px; }
+  .members-list { padding: 5px 5px 20px; min-height: 30px; }
 
   /* ── Member Chip (coloured by class) ─────────────── */
   .member-chip {
     display: flex;
     align-items: center;
     gap: 3px;
-    padding: 3px 4px 5px;
+    padding: 3px 4px 8px;
     border-radius: 6px;
     margin-bottom: 3px;
     border-left: 3px solid var(--none-border);
@@ -302,8 +302,8 @@
     cursor: text;
     user-select: text;
     letter-spacing: .01em;
-    line-height: 1.6;
-    padding-bottom: 2px;
+    line-height: 1.8;
+    padding-bottom: 4px;
   }
   .member-name-input::placeholder { color: var(--muted); font-size:.68rem; font-weight:400; }
   .member-name-input:focus { background:rgba(179,157,219,.1); border-radius:3px; padding:1px 3px; }
@@ -2107,13 +2107,16 @@ async function downloadJpgFromModal() {
     const isDark = document.body.classList.contains('dark-mode');
     const bgColor = isDark ? '#0f0d17' : '#f5f0f8';
 
-    // 1) Capture เฉพาะ #app (cards เท่านั้น ไม่มี tab/search)
+    // 1) Capture document.body ทั้งหมด (วิธีนี้ html2canvas render Thai font ถูกต้อง)
+    //    แล้วค่อย crop เฉพาะส่วน #app ออกมา
     const appEl = document.getElementById('app');
-    // เพิ่ม padding ล่างชั่วคราวเพื่อป้องกันตัวอักษรภาษาไทยโดนตัด
-    const origPadding = appEl.style.paddingBottom;
-    appEl.style.paddingBottom = '20px';
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const pageCanvas = await html2canvas(appEl, {
+    const appRect = appEl.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+    const appTop  = appRect.top  + scrollTop;
+    const appLeft = appRect.left + scrollLeft;
+
+    const fullCanvas = await html2canvas(document.body, {
       backgroundColor: bgColor,
       scale: 2,
       useCORS: true,
@@ -2122,12 +2125,21 @@ async function downloadJpgFromModal() {
       allowTaint: true,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: appEl.scrollHeight + 40,
-      width: appEl.scrollWidth,
-      height: appEl.scrollHeight + 40,
+      windowWidth:  document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+      width:  document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight,
     });
-    appEl.style.paddingBottom = origPadding;
+
+    // crop เฉพาะส่วน #app (x2 เพราะ scale=2)
+    const cropX = Math.round(appLeft  * 2);
+    const cropY = Math.round(appTop   * 2);
+    const cropW = Math.round(appEl.scrollWidth  * 2);
+    const cropH = Math.round(appEl.scrollHeight * 2);
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.width  = cropW;
+    pageCanvas.height = cropH;
+    pageCanvas.getContext('2d').drawImage(fullCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
     // 2) สร้าง header banner (fixed pixel height ที่ scale=2)
     const canvasScale = 2; // ตรงกับ scale ของ html2canvas
