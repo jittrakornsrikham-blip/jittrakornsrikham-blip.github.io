@@ -147,10 +147,11 @@
   /* ── Grid ─────────────────────────────────────────── */
   .parties-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 0.6fr));
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 16px;
+    grid-template-columns: repeat(5, minmax(250px, 1fr));
+    gap: 10px;
+    margin: 0 auto 16px auto;
+    max-width: 1480px;
+    align-items: start;
   }
   @media(max-width:1200px){ .parties-grid{ grid-template-columns:repeat(4,1fr); gap:7px; } }
   @media(max-width:900px) { .parties-grid{ grid-template-columns:repeat(3,1fr); gap:6px; } }
@@ -244,14 +245,14 @@
   }
 
   /* ── Members List ─────────────────────────────────── */
-  .members-list { padding: 5px; min-height: 30px; }
+  .members-list { padding: 5px; min-height: 30px; max-height: none; }
 
   /* ── Member Chip (coloured by class) ─────────────── */
   .member-chip {
     display: flex;
     align-items: center;
     gap: 3px;
-    padding: 3px 4px;
+    padding: 5px 6px;
     border-radius: 6px;
     margin-bottom: 3px;
     border-left: 3px solid var(--none-border);
@@ -281,8 +282,8 @@
   .drag-handle { color: var(--muted); font-size:.6rem; flex-shrink:0; opacity:.4; }
 
   .class-icon {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     object-fit: contain;
     flex-shrink: 0;
     filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
@@ -290,7 +291,7 @@
 
   .member-name-input {
     font-family: 'Sarabun', 'Kanit', sans-serif;
-    font-size: .75rem;
+    font-size: .78rem; line-height: 1.3;
     font-weight: 600;
     color: #111111;
     border: none;
@@ -313,8 +314,8 @@
     border: 1.5px solid transparent;
     border-radius: 50%;
     padding: 0;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     cursor: pointer;
     outline: none;
     flex-shrink: 0;
@@ -589,7 +590,7 @@
   }
   .filter-label {
     font-family: 'Kanit', sans-serif;
-    font-size: .75rem;
+    font-size: .78rem; line-height: 1.3;
     font-weight: 700;
     color: var(--muted);
     letter-spacing: .05em;
@@ -597,7 +598,7 @@
   }
   .filter-pill {
     font-family: 'Kanit', sans-serif;
-    font-size: .75rem;
+    font-size: .78rem; line-height: 1.3;
     font-weight: 700;
     padding: 5px 13px;
     border-radius: 20px;
@@ -629,7 +630,7 @@
   /* player count badge */
   .search-result-count {
     font-family: 'Kanit', sans-serif;
-    font-size: .75rem;
+    font-size: .78rem; line-height: 1.3;
     font-weight: 700;
     color: var(--muted);
     white-space: nowrap;
