@@ -756,9 +756,6 @@ const mkDefaultData = () => ({
     { name:'B5 ปลวกกินเสา', members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B3 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B4 เรทหลัก', members: Array(6).fill(0).map(mkMember), reserve:false },
-    { name:'ตัวสำรอง 1',  members: Array(6).fill(0).map(mkMember), reserve:true  },
-    { name:'ตัวสำรอง 2',  members: Array(6).fill(0).map(mkMember), reserve:true  },
-    { name:'ตัวสำรอง 3',  members: Array(6).fill(0).map(mkMember), reserve:true  },
     { name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true  },
     { name:'ไม่ว่าง/ลา 2', members: Array(6).fill(0).map(mkMember), reserve:true  },
   ]
@@ -801,24 +798,8 @@ function normalizeData(d) {
     p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
     if (p.reserve === undefined) p.reserve = false;
   });
-  // migrate: rename old "ตัวสำรอง" → "ตัวสำรอง 1"
-  const oldReserve = d.parties.find(p => p.name === 'ตัวสำรอง');
-  if (oldReserve) oldReserve.name = 'ตัวสำรอง 1';
-  // migrate: ensure "ตัวสำรอง 1" exists
-  const hasReserve1 = d.parties.some(p => p.name === 'ตัวสำรอง 1');
-  if (!hasReserve1) {
-    d.parties.push({ name:'ตัวสำรอง 1', members: Array(6).fill(0).map(mkMember), reserve:true });
-  }
-  // migrate: ensure "ตัวสำรอง 2" exists
-  const hasReserve2 = d.parties.some(p => p.name === 'ตัวสำรอง 2');
-  if (!hasReserve2) {
-    d.parties.push({ name:'ตัวสำรอง 2', members: Array(6).fill(0).map(mkMember), reserve:true });
-  }
-  // migrate: ensure "ตัวสำรอง 3" exists
-  const hasReserve3 = d.parties.some(p => p.name === 'ตัวสำรอง 3');
-  if (!hasReserve3) {
-    d.parties.push({ name:'ตัวสำรอง 3', members: Array(6).fill(0).map(mkMember), reserve:true });
-  }
+  // ลบ "ตัวสำรอง 1/2/3" ที่โหลดมาจาก DB เก่า
+  d.parties = d.parties.filter(p => !/^ตัวสำรอง\s*\d*$/.test((p.name || '').trim()));
   // migrate: ensure "ไม่ว่าง/ลา" exists
   const hasAbsent = d.parties.some(p => p.name === 'ไม่ว่าง/ลา');
   if (!hasAbsent) {
@@ -2115,6 +2096,10 @@ async function downloadJpgFromModal() {
   // ซ่อน modal ก่อน capture
   document.getElementById('jpg-modal').style.display = 'none';
 
+  // ซ่อน UI ที่ไม่ต้องการในรูป (tab bar, search bar)
+  const hideEls = ['search-bar', 'tab-bar'].map(id => document.getElementById(id)).filter(Boolean);
+  hideEls.forEach(el => { el._prevDisplay = el.style.display; el.style.display = 'none'; });
+
   // รอ 1 frame ให้ browser repaint
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
@@ -2122,8 +2107,9 @@ async function downloadJpgFromModal() {
     const isDark = document.body.classList.contains('dark-mode');
     const bgColor = isDark ? '#0f0d17' : '#f5f0f8';
 
-    // 1) Capture ทั้งหน้า (document.body) รวม tab bar + cards ทั้งหมด
-    const pageCanvas = await html2canvas(document.body, {
+    // 1) Capture เฉพาะ #app (cards เท่านั้น ไม่มี tab/search)
+    const appEl = document.getElementById('app');
+    const pageCanvas = await html2canvas(appEl, {
       backgroundColor: bgColor,
       scale: 2,
       useCORS: true,
@@ -2132,58 +2118,54 @@ async function downloadJpgFromModal() {
       scrollX: 0,
       scrollY: 0,
       windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight,
-      width: document.documentElement.scrollWidth,
-      height: document.documentElement.scrollHeight,
+      windowHeight: appEl.scrollHeight,
+      width: appEl.scrollWidth,
+      height: appEl.scrollHeight,
     });
 
-    // 2) สร้าง header banner
-    const scale = pageCanvas.width / Math.max(document.documentElement.scrollWidth * 2, 1);
-    const headerH = Math.round(90 * scale);
+    // 2) สร้าง header banner (fixed pixel height ที่ scale=2)
+    const canvasScale = 2; // ตรงกับ scale ของ html2canvas
+    const headerH = 80 * canvasScale; // 80px จริง → 160px บน canvas
     const finalCanvas = document.createElement('canvas');
     finalCanvas.width  = pageCanvas.width;
     finalCanvas.height = pageCanvas.height + headerH;
 
     const ctx = finalCanvas.getContext('2d');
 
-    // พื้นหลัง header แบบ gradient
+    // พื้นหลัง header
     const grad = ctx.createLinearGradient(0, 0, finalCanvas.width, 0);
     if (mode === 'แข่ง') {
-      grad.addColorStop(0, '#1a0a2e');
-      grad.addColorStop(0.5, '#7c2d82');
-      grad.addColorStop(1, '#1a0a2e');
+      grad.addColorStop(0, '#1a0a2e'); grad.addColorStop(0.5, '#7c2d82'); grad.addColorStop(1, '#1a0a2e');
     } else {
-      grad.addColorStop(0, '#0a1a2e');
-      grad.addColorStop(0.5, '#1a4a6e');
-      grad.addColorStop(1, '#0a1a2e');
+      grad.addColorStop(0, '#0d1b2e'); grad.addColorStop(0.5, '#1a4a6e'); grad.addColorStop(1, '#0d1b2e');
     }
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, finalCanvas.width, headerH);
 
     // เส้นขีดด้านล่าง header
-    ctx.fillStyle = mode === 'แข่ง' ? 'rgba(200,100,255,0.4)' : 'rgba(100,200,255,0.4)';
+    ctx.fillStyle = mode === 'แข่ง' ? 'rgba(200,100,255,0.5)' : 'rgba(80,180,255,0.5)';
     ctx.fillRect(0, headerH - 3, finalCanvas.width, 3);
 
-    // ข้อความ header
+    // ข้อความ header — font size fixed ที่ scale=2
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     const modeEmoji = mode === 'ซ้อม' ? '🥊' : '🏆';
-    const fs1 = Math.round(26 * scale);
-    const fs2 = Math.round(19 * scale);
 
+    // บรรทัดหลัก
     ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${fs1}px 'Kanit', 'Sarabun', sans-serif`;
+    ctx.font = `bold ${28 * canvasScale}px 'Kanit', sans-serif`;
     const line1 = guild
-      ? `${modeEmoji} ${mode} | 📅 วัน${day} ${date}  ⚔️ vs ${guild}`
+      ? `${modeEmoji} ${mode} | 📅 วัน${day} ${date}   ⚔️ vs ${guild}`
       : `${modeEmoji} ${mode} | 📅 วัน${day} ${date}`;
-    ctx.fillText(line1, finalCanvas.width / 2, headerH * 0.58);
+    ctx.fillText(line1, finalCanvas.width / 2, headerH * 0.38);
 
-    // round label เล็ก ๆ
+    // round label
     const roundLabels = {1:'⚔️ รอบแรก', 2:'🏆 รอบสอง', 3:'🥊 รอบซ้อมที่ 1', 4:'🥊 รอบซ้อมที่ 2', 5:'🥊 รอบซ้อมที่ 3', 0:'📊 สรุป'};
     ctx.fillStyle = mode === 'แข่ง' ? '#e0b0ff' : '#80d8ff';
-    ctx.font = `${fs2}px 'Kanit', 'Sarabun', sans-serif`;
-    ctx.fillText(roundLabels[currentRound] || '', finalCanvas.width / 2, headerH * 0.88);
+    ctx.font = `${19 * canvasScale}px 'Kanit', sans-serif`;
+    ctx.fillText(roundLabels[currentRound] || '', finalCanvas.width / 2, headerH * 0.72);
 
-    // วาด page canvas ด้านล่าง header
+    // วาด cards ด้านล่าง header
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, headerH, finalCanvas.width, pageCanvas.height);
     ctx.drawImage(pageCanvas, 0, headerH);
@@ -2205,6 +2187,8 @@ async function downloadJpgFromModal() {
     alert('❌ ดาวน์โหลดไม่สำเร็จ: ' + e.message);
     document.getElementById('jpg-modal').style.display = 'flex';
   } finally {
+    // คืนค่า UI ที่ซ่อนไว้
+    hideEls.forEach(el => { el.style.display = el._prevDisplay; });
     btn.textContent = '🖼 ดาวน์โหลด JPG';
     btn.disabled = false;
   }
