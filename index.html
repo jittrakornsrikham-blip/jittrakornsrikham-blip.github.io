@@ -147,13 +147,13 @@
   /* ── Grid ─────────────────────────────────────────── */
   .parties-grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
     margin-bottom: 16px;
   }
-  @media(max-width:1400px){ .parties-grid{ grid-template-columns:repeat(6,1fr); gap:7px; } }
-  @media(max-width:1100px){ .parties-grid{ grid-template-columns:repeat(4,1fr); gap:6px; } }
-  @media(max-width:700px) { .parties-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:1200px){ .parties-grid{ grid-template-columns:repeat(4,1fr); gap:7px; } }
+  @media(max-width:900px) { .parties-grid{ grid-template-columns:repeat(3,1fr); gap:6px; } }
+  @media(max-width:600px) { .parties-grid{ grid-template-columns:repeat(2,1fr); } }
   @media(max-width:400px) { .parties-grid{ grid-template-columns:1fr; } }
 
   /* ── Party Card ───────────────────────────────────── */
@@ -732,12 +732,13 @@ const mkDefaultData = () => ({
     { name:'A4 โค่ว-พี่เตอร์',   members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B1 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B2 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
-    { name:'ตัวสำรอง',  members: Array(6).fill(0).map(mkMember), reserve:true  },
-    { name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true  },
     { name:'A5 โรม', members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B5 ปลวกกินเสา', members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B3 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B4 เรทหลัก', members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'ตัวสำรอง 1',  members: Array(6).fill(0).map(mkMember), reserve:true  },
+    { name:'ตัวสำรอง 2',  members: Array(6).fill(0).map(mkMember), reserve:true  },
+    { name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true  },
   ]
 });
 
@@ -778,10 +779,23 @@ function normalizeData(d) {
     p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
     if (p.reserve === undefined) p.reserve = false;
   });
-  // migrate: ensure "ไม่ว่าง/ลา" party exists
+  // migrate: rename old "ตัวสำรอง" → "ตัวสำรอง 1"
+  const oldReserve = d.parties.find(p => p.name === 'ตัวสำรอง');
+  if (oldReserve) oldReserve.name = 'ตัวสำรอง 1';
+  // migrate: ensure "ตัวสำรอง 1" exists
+  const hasReserve1 = d.parties.some(p => p.name === 'ตัวสำรอง 1');
+  if (!hasReserve1) {
+    d.parties.push({ name:'ตัวสำรอง 1', members: Array(6).fill(0).map(mkMember), reserve:true });
+  }
+  // migrate: ensure "ตัวสำรอง 2" exists
+  const hasReserve2 = d.parties.some(p => p.name === 'ตัวสำรอง 2');
+  if (!hasReserve2) {
+    d.parties.push({ name:'ตัวสำรอง 2', members: Array(6).fill(0).map(mkMember), reserve:true });
+  }
+  // migrate: ensure "ไม่ว่าง/ลา" exists
   const hasAbsent = d.parties.some(p => p.name === 'ไม่ว่าง/ลา');
   if (!hasAbsent) {
-    d.parties.push({ name:'ไม่ว่าง/ลา', members: Array(5).fill(0).map(mkMember), reserve:true });
+    d.parties.push({ name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true });
   }
   return d;
 }
@@ -867,7 +881,7 @@ function render() {
   });
   reserve.forEach((party, ridx) => {
     const pi = data.parties.indexOf(party);
-    const reserveColors = ['#ffab91','#ef9a9a'];
+    const reserveColors = ['#ffab91','#ef9a9a','#ce93d8'];
     html += renderCard(party, pi, reserveColors[ridx % reserveColors.length], true, null);
   });
   html += `</div>`;
