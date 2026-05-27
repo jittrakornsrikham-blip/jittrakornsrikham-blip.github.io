@@ -147,7 +147,8 @@
   /* ── Grid ─────────────────────────────────────────── */
   .parties-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 0.6fr));
+    justify-content: center;
     gap: 8px;
     margin-bottom: 16px;
   }
@@ -2136,47 +2137,7 @@ async function downloadJpgFromModal() {
     }
 
     // Draw app screenshot below header
-    // ลดความกว้างเหลือ 60% และจัดกึ่งกลาง เพื่อไม่ให้ card แน่นเกินตอน export JPG
-    const exportScale = 0.6;
-    const drawWidth = appCanvas.width * exportScale;
-    const drawHeight = appCanvas.height * exportScale;
-    const offsetX = (finalCanvas.width - drawWidth) / 2;
-
-    // ปรับ canvas สูงใหม่ให้พอดีกับภาพที่ย่อ
-    finalCanvas.height = drawHeight + headerH * 2 + 30;
-
-    // redraw background หลัง resize canvas
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-    // redraw header gradient
-    const grad2 = ctx.createLinearGradient(0, 0, finalCanvas.width, 0);
-    if (mode === 'แข่ง') {
-      grad2.addColorStop(0, '#1a0a2e');
-      grad2.addColorStop(0.5, '#7c2d82');
-      grad2.addColorStop(1, '#1a0a2e');
-    } else {
-      grad2.addColorStop(0, '#0a1a2e');
-      grad2.addColorStop(0.5, '#1a5276');
-      grad2.addColorStop(1, '#0a1a2e');
-    }
-    ctx.fillStyle = grad2;
-    ctx.fillRect(0, 0, finalCanvas.width, headerH * 2);
-
-    // redraw text
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${baseFontSize}px 'Kanit', sans-serif`;
-    ctx.fillText(`${modeEmoji} ${mode} | 📅 วัน${day} ${date}`, finalCanvas.width / 2, headerH * 0.85);
-
-    if (guild) {
-      ctx.fillStyle = '#ffd700';
-      ctx.font = `bold ${smallFontSize}px 'Kanit', sans-serif`;
-      ctx.fillText(`⚔️ vs ${guild}`, finalCanvas.width / 2, headerH * 1.55);
-    }
-
-    // draw resized app
-    ctx.drawImage(appCanvas, offsetX, headerH * 2, drawWidth, drawHeight);
+    ctx.drawImage(appCanvas, 0, headerH * 2);
 
     // Download
     const link = document.createElement('a');
