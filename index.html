@@ -147,14 +147,13 @@
   /* ── Grid ─────────────────────────────────────────── */
   .parties-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 0.6fr));
-    justify-content: center;
+    grid-template-columns: repeat(8, 1fr);
     gap: 8px;
     margin-bottom: 16px;
   }
-  @media(max-width:1200px){ .parties-grid{ grid-template-columns:repeat(4,1fr); gap:7px; } }
-  @media(max-width:900px) { .parties-grid{ grid-template-columns:repeat(3,1fr); gap:6px; } }
-  @media(max-width:600px) { .parties-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:1400px){ .parties-grid{ grid-template-columns:repeat(6,1fr); gap:7px; } }
+  @media(max-width:1100px){ .parties-grid{ grid-template-columns:repeat(4,1fr); gap:6px; } }
+  @media(max-width:700px) { .parties-grid{ grid-template-columns:repeat(2,1fr); } }
   @media(max-width:400px) { .parties-grid{ grid-template-columns:1fr; } }
 
   /* ── Party Card ───────────────────────────────────── */
@@ -169,17 +168,6 @@
   .party-card.drag-over {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(179,157,219,.4), 0 4px 20px rgba(100,80,150,.12);
-  }
-  .party-card.card-dragging {
-    opacity: .4;
-    transform: scale(.97);
-    transition: opacity .15s, transform .15s;
-  }
-  .party-card.card-drop-target {
-    border-color: #b39ddb;
-    box-shadow: 0 0 0 3px rgba(179,157,219,.55), 0 6px 24px rgba(100,80,150,.2);
-    transform: scale(1.02);
-    transition: all .15s;
   }
 
   /* reserve card */
@@ -196,10 +184,7 @@
     padding: 6px 8px;
     border-bottom: 1px solid var(--border);
     background: var(--surface2);
-    cursor: grab;
-    user-select: none;
   }
-  .party-header:active { cursor: grabbing; }
 
   .party-num {
     font-family: 'Kanit', sans-serif;
@@ -733,13 +718,12 @@ const mkDefaultData = () => ({
     { name:'A4 โค่ว-พี่เตอร์',   members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B1 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B2 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
+    { name:'ตัวสำรอง',  members: Array(6).fill(0).map(mkMember), reserve:true  },
+    { name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true  },
     { name:'A5 โรม', members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B5 ปลวกกินเสา', members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B3 เรทหลัก',   members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'B4 เรทหลัก', members: Array(6).fill(0).map(mkMember), reserve:false },
-    { name:'ตัวสำรอง 1',  members: Array(6).fill(0).map(mkMember), reserve:true  },
-    { name:'ตัวสำรอง 2',  members: Array(6).fill(0).map(mkMember), reserve:true  },
-    { name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true  },
   ]
 });
 
@@ -780,23 +764,10 @@ function normalizeData(d) {
     p.members = p.members.map(m => typeof m === 'string' ? {name:m,cls:'none'} : m);
     if (p.reserve === undefined) p.reserve = false;
   });
-  // migrate: rename old "ตัวสำรอง" → "ตัวสำรอง 1"
-  const oldReserve = d.parties.find(p => p.name === 'ตัวสำรอง');
-  if (oldReserve) oldReserve.name = 'ตัวสำรอง 1';
-  // migrate: ensure "ตัวสำรอง 1" exists
-  const hasReserve1 = d.parties.some(p => p.name === 'ตัวสำรอง 1');
-  if (!hasReserve1) {
-    d.parties.push({ name:'ตัวสำรอง 1', members: Array(6).fill(0).map(mkMember), reserve:true });
-  }
-  // migrate: ensure "ตัวสำรอง 2" exists
-  const hasReserve2 = d.parties.some(p => p.name === 'ตัวสำรอง 2');
-  if (!hasReserve2) {
-    d.parties.push({ name:'ตัวสำรอง 2', members: Array(6).fill(0).map(mkMember), reserve:true });
-  }
-  // migrate: ensure "ไม่ว่าง/ลา" exists
+  // migrate: ensure "ไม่ว่าง/ลา" party exists
   const hasAbsent = d.parties.some(p => p.name === 'ไม่ว่าง/ลา');
   if (!hasAbsent) {
-    d.parties.push({ name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true });
+    d.parties.push({ name:'ไม่ว่าง/ลา', members: Array(5).fill(0).map(mkMember), reserve:true });
   }
   return d;
 }
@@ -882,7 +853,7 @@ function render() {
   });
   reserve.forEach((party, ridx) => {
     const pi = data.parties.indexOf(party);
-    const reserveColors = ['#ffab91','#ef9a9a','#ce93d8'];
+    const reserveColors = ['#ffab91','#ef9a9a'];
     html += renderCard(party, pi, reserveColors[ridx % reserveColors.length], true, null);
   });
   html += `</div>`;
@@ -960,16 +931,10 @@ function renderCard(party, pi, color, isReserve, num) {
     ondrop="cardDrop(event,${pi})"
   >
     <div class="party-color-bar" style="background:${color}"></div>
-    <div class="party-header"
-      draggable="true"
-      ondragstart="partyDragStart(event,${pi})"
-      ondragend="partyDragEnd(event,${pi})"
-    >
-      <span style="font-size:.6rem;color:var(--muted);opacity:.5;flex-shrink:0;margin-right:1px;">⠿</span>
+    <div class="party-header">
       ${num ? `<span class="party-num">${String(num).padStart(2,'0')}</span>` : ''}
       <input class="party-name-input" value="${esc(party.name)}" placeholder="ชื่อปาร์ตี้..."
-        oninput="data.parties[${pi}].name=this.value"
-        ondragstart="event.stopPropagation()" />
+        oninput="data.parties[${pi}].name=this.value" />
       ${isReserve ? `<span class="reserve-badge">🛡 สำรอง</span>` : ''}
     </div>
     <div class="members-list">
@@ -1140,20 +1105,6 @@ function moveToParty(fromPi, mi, toPiStr) {
 }
 
 /* ── drag ───────────────────────────────────────────── */
-let partyDrag = null; // { pi } for party-level drag
-
-function partyDragStart(e, pi) {
-  partyDrag = { pi };
-  e.dataTransfer.effectAllowed = 'move';
-  e.stopPropagation();
-  setTimeout(() => document.getElementById(`card-${pi}`)?.classList.add('card-dragging'), 0);
-}
-function partyDragEnd(e, pi) {
-  partyDrag = null;
-  document.querySelectorAll('.party-card.card-dragging').forEach(c => c.classList.remove('card-dragging'));
-  document.querySelectorAll('.party-card.card-drop-target').forEach(c => c.classList.remove('card-drop-target'));
-  clearHighlights();
-}
 function chipDragStart(e, pi, mi) {
   drag = { pi, mi };
   e.dataTransfer.effectAllowed = 'move';
@@ -1184,13 +1135,6 @@ function chipDrop(e, tpi, tmi) {
 }
 
 function cardDragOver(e, pi) {
-  if (partyDrag) {
-    if (partyDrag.pi === pi) return;
-    e.preventDefault(); e.stopPropagation();
-    document.querySelectorAll('.party-card.card-drop-target').forEach(c => c.classList.remove('card-drop-target'));
-    document.getElementById(`card-${pi}`)?.classList.add('card-drop-target');
-    return;
-  }
   if (!drag) return; e.preventDefault();
   const card = document.getElementById(`card-${pi}`);
   document.querySelectorAll('.party-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
@@ -1198,30 +1142,10 @@ function cardDragOver(e, pi) {
 }
 function cardDragLeave(e, pi) {
   const card = document.getElementById(`card-${pi}`);
-  if (card && !card.contains(e.relatedTarget)) {
-    card.classList.remove('drag-over');
-    card.classList.remove('card-drop-target');
-  }
+  if (card && !card.contains(e.relatedTarget)) card.classList.remove('drag-over');
 }
 function cardDrop(e, tpi) {
   e.preventDefault();
-  // Party swap
-  if (partyDrag) {
-    const spi = partyDrag.pi;
-    partyDrag = null;
-    document.querySelectorAll('.party-card.card-drop-target').forEach(c => c.classList.remove('card-drop-target'));
-    document.querySelectorAll('.party-card.card-dragging').forEach(c => c.classList.remove('card-dragging'));
-    if (spi === tpi) return;
-    // Swap parties in array
-    [data.parties[spi], data.parties[tpi]] = [data.parties[tpi], data.parties[spi]];
-    render();
-    const t = document.getElementById('toast');
-    t.textContent = `🔀 สลับปาร์ตี้แล้ว!`;
-    t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 1800);
-    return;
-  }
-  // Chip move
   if (!drag) return;
   const { pi:spi, mi:smi } = drag;
   if (spi===tpi) { drag=null; clearHighlights(); return; }
@@ -2084,28 +2008,60 @@ async function downloadJpgFromModal() {
     const isDark = document.body.classList.contains('dark-mode');
     const bgColor = isDark ? '#0f0d17' : '#f5f0f8';
 
-    // 1) Capture the app (ไม่มี header ด้านบน)
+    // 1) Capture the app
     const el = document.getElementById('app');
     const appCanvas = await html2canvas(el, {
       backgroundColor: bgColor,
-      scale: 2.5,
+      scale: 2,
       useCORS: true,
       logging: false,
-      letterRendering: true,
-      foreignObjectRendering: true,
-      scrollX: 0,
-      scrollY: -window.scrollY,
     });
 
-    // ใช้ canvas ตรง ๆ เพื่อลดปัญหาชื่อโดนตัด/แหว่ง
+    // 2) Build header banner on a new canvas
+    const headerH = 80;
     const finalCanvas = document.createElement('canvas');
     finalCanvas.width  = appCanvas.width;
-    finalCanvas.height = appCanvas.height;
+    finalCanvas.height = appCanvas.height + headerH * 2;
 
     const ctx = finalCanvas.getContext('2d');
+
+    // background fill
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-    ctx.drawImage(appCanvas, 0, 0);
+
+    // Header gradient bar
+    const grad = ctx.createLinearGradient(0, 0, finalCanvas.width, 0);
+    if (mode === 'แข่ง') {
+      grad.addColorStop(0, '#1a0a2e');
+      grad.addColorStop(0.5, '#7c2d82');
+      grad.addColorStop(1, '#1a0a2e');
+    } else {
+      grad.addColorStop(0, '#0a1a2e');
+      grad.addColorStop(0.5, '#1a5276');
+      grad.addColorStop(1, '#0a1a2e');
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, finalCanvas.width, headerH * 2);
+
+    // Mode emoji + text
+    const modeEmoji = mode === 'แข่ง' ? '🏆' : '🥊';
+    const scale = finalCanvas.width / 1200; // scale font by canvas width
+    const baseFontSize = Math.round(28 * scale);
+    const smallFontSize = Math.round(20 * scale);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${baseFontSize}px 'Kanit', sans-serif`;
+    ctx.fillText(`${modeEmoji} ${mode} | 📅 วัน${day} ${date}`, finalCanvas.width / 2, headerH * 0.85);
+
+    if (guild) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = `bold ${smallFontSize}px 'Kanit', sans-serif`;
+      ctx.fillText(`⚔️ vs ${guild}`, finalCanvas.width / 2, headerH * 1.55);
+    }
+
+    // Draw app screenshot below header
+    ctx.drawImage(appCanvas, 0, headerH * 2);
 
     // Download
     const link = document.createElement('a');
