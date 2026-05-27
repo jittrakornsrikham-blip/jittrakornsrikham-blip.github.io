@@ -739,7 +739,9 @@ const mkDefaultData = () => ({
     { name:'B4 เรทหลัก', members: Array(6).fill(0).map(mkMember), reserve:false },
     { name:'ตัวสำรอง 1',  members: Array(6).fill(0).map(mkMember), reserve:true  },
     { name:'ตัวสำรอง 2',  members: Array(6).fill(0).map(mkMember), reserve:true  },
+    { name:'ตัวสำรอง 3',  members: Array(6).fill(0).map(mkMember), reserve:true  },
     { name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true  },
+    { name:'ไม่ว่าง/ลา 2', members: Array(6).fill(0).map(mkMember), reserve:true  },
   ]
 });
 
@@ -793,10 +795,20 @@ function normalizeData(d) {
   if (!hasReserve2) {
     d.parties.push({ name:'ตัวสำรอง 2', members: Array(6).fill(0).map(mkMember), reserve:true });
   }
+  // migrate: ensure "ตัวสำรอง 3" exists
+  const hasReserve3 = d.parties.some(p => p.name === 'ตัวสำรอง 3');
+  if (!hasReserve3) {
+    d.parties.push({ name:'ตัวสำรอง 3', members: Array(6).fill(0).map(mkMember), reserve:true });
+  }
   // migrate: ensure "ไม่ว่าง/ลา" exists
   const hasAbsent = d.parties.some(p => p.name === 'ไม่ว่าง/ลา');
   if (!hasAbsent) {
     d.parties.push({ name:'ไม่ว่าง/ลา', members: Array(6).fill(0).map(mkMember), reserve:true });
+  }
+  // migrate: ensure "ไม่ว่าง/ลา 2" exists
+  const hasAbsent2 = d.parties.some(p => p.name === 'ไม่ว่าง/ลา 2');
+  if (!hasAbsent2) {
+    d.parties.push({ name:'ไม่ว่าง/ลา 2', members: Array(6).fill(0).map(mkMember), reserve:true });
   }
   return d;
 }
@@ -882,7 +894,7 @@ function render() {
   });
   reserve.forEach((party, ridx) => {
     const pi = data.parties.indexOf(party);
-    const reserveColors = ['#ffab91','#ef9a9a','#ce93d8'];
+    const reserveColors = ['#ffab91','#ef9a9a','#ffab91','#ce93d8','#ef9a9a'];
     html += renderCard(party, pi, reserveColors[ridx % reserveColors.length], true, null);
   });
   html += `</div>`;
